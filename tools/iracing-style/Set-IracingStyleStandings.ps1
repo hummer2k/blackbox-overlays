@@ -1,0 +1,185 @@
+<#
+.SYNOPSIS
+  Restyles benofficial2's "iRacing Multi-Class Standings" overlay in the native iRacing (2025 UI) look,
+  keeping the per-class grouping.
+
+.DESCRIPTION
+  Reads the ORIGINAL (unmodified) overlay from -SourceDir and writes the restyled overlay to -TargetDir.
+  Same look as the Relative: one continuous panel with border and shade, yellow STANDINGS title,
+  class timeline + markers + glow, left-rounded position cells, '#' in class colour, Inter font.
+  The former header (session type, lap, time left) moves into footer cells (Lap, Left).
+
+.EXAMPLE
+  git checkout upstream/master -- "Overlays/benofficial2 - iRacing Multi-Class Standings"
+  .\tools\iracing-style\Set-IracingStyleStandings.ps1 -SourceDir "Overlays\benofficial2 - iRacing Multi-Class Standings" -TargetDir "Overlays\benofficial2 - iRacing Multi-Class Standings"
+#>
+param(
+  [Parameter(Mandatory)] [string]$SourceDir,
+  [Parameter(Mandatory)] [string]$TargetDir,
+  [string]$Font = 'Inter'
+)
+. (Join-Path $PSScriptRoot 'IracingStyle.Common.ps1')
+
+$SourceDir = (Resolve-Path $SourceDir).Path
+if (-not (Test-Path $TargetDir)) { New-Item -ItemType Directory $TargetDir | Out-Null }
+$TargetDir = (Resolve-Path $TargetDir).Path
+$name = 'benofficial2 - iRacing Multi-Class Standings'
+
+$Shift    = 20           # room for position cell + class timeline before the car number
+$OrigW    = 690          # benofficial2 dashboard width
+$OrigRowW = 641          # benofficial2 minimum row width
+$NewW     = $OrigW + $Shift
+$ClassGap = 4            # space above each class block
+$ClassHdr = 24           # class header height (badge, SOF, drivers, column titles)
+
+$ci         = "`$prop('variable.ClassIdx')"
+$ri         = "(repeatindex() - 1)"
+$isPlayer   = "isnull(getStandingsProp($ci, $ri, 'IsHighlighted'), false)"
+$classColor = "isnull(getStandingsProp($ci, $ri, 'CarClassColor'), '#FFFFFF')"
+$sameClass  = "$ci == isnull(`$prop('benofficial2.Standings.PlayerCarClassIdx'), 0)"
+
+# JS: vertical offset of class block $limitExpr (sum of all previous visible class blocks)
+function Get-BlockLoopJs([string]$limitExpr) {
+@"
+const titleVisible = isnull(`$prop('benofficial2.Standings.HeaderVisible'), true);
+const classHeaderVisible = isnull(`$prop('benofficial2.Standings.CarClassHeaderVisible'), true);
+let offset = titleVisible ? $HeaderH : 6;
+for (let i = 0; i < $limitExpr; i++)
+{
+	const visibleRowCount = isnull(getStandingsClassProp(i, 'VisibleRowCount'), 0);
+	if (visibleRowCount > 0)
+	{
+		offset += $ClassGap + visibleRowCount * $R;
+		if (isDividerVisible(i)) offset += 3;
+		if (classHeaderVisible) offset += $ClassHdr;
+	}
+}
+"@
+}
+# player name / timing colours: iRacing shows the player's row in yellow, everything else off-white
+function Set-StandingsTextColor($item) {
+  if (-not ($item['Bindings'] -and $item['Bindings'].ContainsKey('TextColor'))) { return }
+  $f = $item['Bindings']['TextColor']['Formula']
+  $e = [regex]::Replace($f['Expression'], "if \(isnull\(\`$prop\('benofficial2\.Standings\.HighlightPlayerRow'\), true\)\)\s*return 'White'\s*", '')
+  $f['Expression'] = $e.Replace("'White'", "'#F2F2F3'")
+}
+
+Initialize-Target $SourceDir $TargetDir "$name.djson"
+
+# ---------------- Class Standings (one widget per class) ----------------
+$csPath = Join-Path $TargetDir 'Class Standings.djson'
+$cs = Read-Dash $csPath
+$cs['BaseWidth'] = [int]($cs['BaseWidth'] + $Shift)
+(Get-Var $cs 'dashboardWidth')['ValueExpression']['Expression'] = "$NewW"
+(Get-Var $cs 'PlayerNameTextColor')['ValueExpression']['Expression'] = "'#FFCC00'"
+$v = Get-Var $cs 'variableWidth'
+$v['ValueExpression']['Expression'] = $v['ValueExpression']['Expression'].Replace("- $OrigRowW", "- $($OrigRowW + $Shift)").Replace("isnull(`$prop('benofficial2.Standings.Width'), 730)", "isnull(`$prop('benofficial2.Standings.Width'), 730) + $Shift")
+if ($v['ValueExpression']['Expression'] -notmatch "\+ $Shift") { throw 'variableWidth patch failed' }
+$hw = Get-Var $cs 'headerWidth'
+$hw['ValueExpression']['Expression'] = $hw['ValueExpression']['Expression'].Replace("$OrigRowW +", "$($OrigRowW + $Shift) +")
+
+$root   = $cs['Screens'][0]['Items'][0]
+$rowRep = Get-Child $root 'Row Repeat'
+$row    = $rowRep['Childrens'][0]
+$hdr    = Get-Child $root 'Header'
+
+# rows: new pitch and start below the taller class header
+$rowRep['RepeatTopOffset'] = [double]$R
+$rt = $row['Bindings']['Top']['Formula']
+$rt['Expression'] = $rt['Expression'].Replace('let top = 7.5;', "let top = $ClassGap;").Replace('const headerHeight = 18;', "const headerHeight = $ClassHdr;")
+if ($rt['Expression'] -notmatch "let top = $ClassGap;") { throw 'row Top patch failed' }
+$row['Height'] = [double]$R
+foreach ($c in @($row['Childrens'])) { Set-RowHeight $c 20 $R }
+
+$bg = Get-Child $row 'Background'
+$bg['Visible'] = $false
+$hl = Get-Child $row 'Player Highlight'
+Set-PlayerHighlight $hl (Get-Expr $hl 'Visible') '[variable.headerWidth] - 2'
+
+foreach ($c in @($row['Childrens'])) {
+  $hasLeftBinding = $c['Bindings'] -and $c['Bindings'].ContainsKey('Left')
+  if ($c['Name'] -ne 'Position In Class' -and ([double]$c['Left'] -ge 20 -or $hasLeftBinding)) { Add-ToLeft $c $Shift }
+  Set-StandingsTextColor $c
+}
+(Get-Child $row 'Driver Name')['FontSize'] = $NameSize
+
+$pos = Get-Child $row 'Position In Class'
+$pos['Left'] = [double]$PosLeft; $pos['Width'] = [double]$PosW; $pos['FontSize'] = $NameSize; $pos['HorizontalAlignment'] = 1
+Set-Js $pos 'TextColor' "return ($isPlayer) ? '$OnYellow' : '$TextWhite';"
+
+# best / last lap highlights (purple / green) as rounded pills instead of full-height blocks
+foreach ($n in 'Best Lap Time', 'Last Lap Time', 'Delta Lap Time') {
+  $t = Get-Child $row $n
+  $t['Top'] = 2.0; $t['Height'] = [double]($R - 4); $t['BorderStyle'] = New-Radius 4 4 4 4
+}
+
+$timeline = New-ClassTimeline $classColor $sameClass
+Insert-Children $row 2 (@($timeline | Where-Object { $_['Name'] -like 'Class Glow*' }) + @(New-PosCell $isPlayer) + @($timeline | Where-Object { $_['Name'] -notlike 'Class Glow*' }))
+
+$num = Get-Child $row 'Number'
+$hash = Set-NumberStyle $num "getStandingsProp($ci, $ri, 'Number')" $isPlayer $classColor "(49 + $Shift + `$prop('variable.PositionChangeOffset')) + 34 - 2"
+Insert-Children $row ([array]::IndexOf(@($row['Childrens']), $num) + 1) @($hash)
+
+# class header: no own background, rounded class badge, dim column titles, thin class-colour underline
+$hdr['Top'] = [double]$ClassGap; $hdr['Height'] = [double]$ClassHdr
+(Get-Child $hdr 'Background')['Visible'] = $false
+$line = Get-Child $hdr 'Line'
+$line['Top'] = 0.0; $line['Height'] = [double]$ClassHdr; $line['BorderStyle']['BorderBottom'] = 2
+$badge = Get-Child $hdr 'Car Class Background'
+$badge['Top'] = 3.0; $badge['Height'] = 18.0; $badge['BorderStyle'] = New-Radius 4 4 4 4
+foreach ($c in @($hdr['Childrens'])) {
+  if ($c['Name'] -in 'Background', 'Line', 'Car Class Background') { continue }
+  $c['Top'] = [double]$c['Top'] + 5                     # re-centre in the 24px header
+  if ($c['Bindings'] -and $c['Bindings'].ContainsKey('Left') -and $c['Name'] -notin 'SOF', 'Driver Count') { Add-ToLeft $c $Shift }
+  if ($c['$type'] -match 'TextItem' -and $c['Name'] -ne 'Car Class') { $c['TextColor'] = $TextDim }
+}
+(Get-Child $hdr 'Car Class')['Top'] = 2.0
+
+Set-Fonts @{ Childrens = @($root) }
+Write-Dash $csPath $cs
+"Class Standings restyled"
+
+# ---------------- main ----------------
+$mainPath = Join-Path $TargetDir "$name.djson"
+$main = Read-Dash $mainPath
+$layer  = $main['Screens'][0]['Items'][0]
+$repeat = Get-Child $layer 'Class Standings Repeat'
+$header = Get-Child $layer 'Header'
+$origHeader = Copy-Deep $header
+
+# the panel needs the row width, which is computed inside the class widget: mirror those variables here
+# (the widget's offset variables override from the parent, so both always agree)
+(Get-Var $main 'dashboardWidth')['ValueExpression']['Expression'] = "$NewW"
+$csSrc = Read-Dash $csPath
+$vars = New-Object System.Collections.ArrayList; $vars.AddRange(@($main['Variables']['DashboardVariables']))
+foreach ($vn in 'PositionChangeOffset', 'GapOffset', 'IntervalOffset', 'BestOffset', 'LastOffset', 'RatingOffset', 'DeltaOffset', 'PitTimeOffset', 'variableWidth') {
+  [void]$vars.Add((Copy-Deep (Get-Var $csSrc $vn)))
+}
+$rw = Copy-Deep (Get-Var $csSrc 'headerWidth'); $rw['VariableName'] = 'rowWidth'; [void]$vars.Add($rw)
+$main['Variables']['DashboardVariables'] = $vars.ToArray()
+Add-Var $main 'panelHeight' ((Get-BlockLoopJs "isnull(`$prop('benofficial2.Standings.VisibleClassCount'), 0)") + "return offset + $FooterH;")
+
+# class blocks: new vertical layout
+$w = $repeat['Childrens'][0]
+$w['Width'] = [double]($w['Width'] + $Shift)
+Set-Js $w 'Top' ((Get-BlockLoopJs 'repeatindex() - 1') + 'return offset;')
+
+$chrome = New-PanelChrome "return isnull(`$prop('benofficial2.Standings.BackgroundOpacity'), 88)" '[variable.rowWidth]' '[variable.panelHeight]'
+Insert-Children $layer 0 @($chrome)
+
+$header['Childrens'] = @(New-Title 'STANDINGS')
+$header['Height'] = [double]$HeaderH
+Set-Nc $header 'Width' '[variable.rowWidth]'
+
+$footer = New-Group 'Footer' 0 0 $NewW $R @(New-FooterCells @(
+  @('Lap',  (Get-Expr (Find-Orig $origHeader 'CurrentLap') 'Text').Replace("return 'Lap ' + currentLap", "return '' + currentLap")),
+  @('Left', (Get-Expr (Find-Orig $origHeader 'Time Left') 'Text'))
+) '[variable.rowWidth]')
+Set-Nc $footer 'Top' "[variable.panelHeight] - $($FooterH - $CellGap)"
+Set-Nc $footer 'Width' '[variable.rowWidth]'
+Insert-Children $layer (@($layer['Childrens']).Count) @($footer)
+
+Update-Metadata $main (Join-Path $TargetDir "$name.djson.metadata") $NewW ([Math]::Round(695 * $R / 20) + $HeaderH - 20)
+Set-Fonts @{ Childrens = @($layer) }
+Write-Dash $mainPath $main
+"Standings main restyled (BaseSize $($main['BaseWidth'])x$($main['BaseHeight']))"

@@ -5,7 +5,15 @@ one continuous rounded panel with a 1px border and a top-to-bottom shade, yellow
 title, class timeline with markers and class-colour glow, left-rounded position cells,
 right-aligned fixed-pitch timing column, off-white text (`#F2F2F3`) and the Inter font.
 
-Currently covered: **Relative** (`Set-IracingStyleRelative.ps1`).
+Currently covered:
+
+| Overlay | Script | Notes |
+|---|---|---|
+| Relative | `Set-IracingStyleRelative.ps1` | footer: Inc, SOF, Track |
+| Multi-Class Standings | `Set-IracingStyleStandings.ps1` | per-class grouping kept; title `STANDINGS`; footer: Lap, Left |
+
+Shared look (palette, metrics, panel, footer cells, position cell, class timeline, car number,
+lossless JSON writer) lives in `IracingStyle.Common.ps1`, so all overlays stay consistent.
 
 The scripts never edit by hand-made patches; they transform the **original** benofficial2 files.
 That keeps the style re-applicable after every upstream update.
@@ -23,7 +31,9 @@ git checkout upstream/master -- "Overlays/benofficial2 - iRacing Relative"
     -TargetDir "Overlays\benofficial2 - iRacing Relative"
 ```
 
-The script refuses to run on files that are already styled.
+Same for the standings (`Set-IracingStyleStandings.ps1` on
+`Overlays/benofficial2 - iRacing Multi-Class Standings`).
+The scripts refuse to run on files that are already styled.
 
 ## Apply to a local SimHub installation
 
@@ -40,8 +50,9 @@ SimHub loads dash fonts from its global `DashFonts` folder. Importing the dash c
 `fonts\Inter-*.ttf` to `C:\Program Files (x86)\SimHub\DashFonts` and restart SimHub
 (or run the script with `-Font 'Segoe UI'`).
 
-The overlay's base size changes (Relative: 500x266 -> 535x328), so resize the overlay
-window once in SimHub's overlay layout editor to avoid distortion.
+The overlays' base sizes change (Relative: 500x266 -> 535x328, Multi-Class Standings:
+690x695 -> 710x846), so resize the overlay windows once in SimHub's overlay layout editor
+to avoid distortion.
 
 ## Notes
 
