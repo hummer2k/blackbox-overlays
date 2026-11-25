@@ -54,20 +54,16 @@ function getRelativeTextColor(index)
 {
     const red = '#FF6345'
     const blue = '#43B7EA'
-    const white = 'White'
+    const white = '#F2F2F3'
 
     const redInPit = '#913927'
     const blueInPit = '#276D8C'
     const whiteInPit = '#828282'
 
-    const highlighted = '#EBAE00'
+    const highlighted = '#FFCC00'
 
     if (index == 0)
     {
-        const highlight = isnull($prop('benofficial2.Relative.HighlightPlayerRow'), false)
-        if (highlight) 
-            return white
-
         return highlighted
     }
 
