@@ -94,13 +94,6 @@
                             Check for updates
                         </styles:SHToggleCheckbox>
 
-                        <styles:SHToggleCheckbox 
-                            ToolTip="Display the clock time in a 24-hour format. Ex: 14:30 instead of 2:30 PM" 
-                            HorizontalAlignment="Left" Margin="0,0,4,8"
-                            IsChecked="{Binding Plugin.Modules[GeneralModule].Settings.ClockFormat24h, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
-                            24-hour clock format
-                        </styles:SHToggleCheckbox>
-
                         <Label Content="Background color" Margin="0,0,0,0"/>
                         <xctk:ColorPicker SelectedColor="{Binding Plugin.Modules[GeneralModule].Settings.BackgroundColor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="113" HorizontalAlignment="Left" ToolTip="Changes the background color of every overlay" />
                     </StackPanel>
@@ -116,16 +109,11 @@
                         </styles:SHToggleCheckbox>
 
                         <styles:SHToggleCheckbox 
-                            ToolTip="Show the header with session information" 
+                            ToolTip="Show the header with the STANDINGS title"
                             HorizontalAlignment="Left" Margin="0,0,4,8"
                             IsChecked="{Binding Plugin.Modules[StandingsModule].Settings.HeaderVisible, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
                             Show header
                         </styles:SHToggleCheckbox>
-
-                        <StackPanel Orientation="Horizontal">
-                            <ui:TitledSlider Width="400" Title="Header Width (%)" Maximum="100" Minimum="0" Value="{Binding Plugin.Modules[StandingsModule].Settings.HeaderWidth, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                            <ui:TitledSlider Width="400" Title="Header Opacity (%)" Maximum="100" Minimum="0" Value="{Binding Plugin.Modules[StandingsModule].Settings.HeaderOpacity, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                        </StackPanel>
 
                         <styles:SHToggleCheckbox 
                             ToolTip="Show the car class header with class information" 
@@ -339,8 +327,6 @@
 
                         <StackPanel Orientation="Horizontal">
                             <ui:TitledSlider Width="400" Title="Background Opacity (%)" Maximum="100" Minimum="0" Value="{Binding Plugin.Modules[StandingsModule].Settings.BackgroundOpacity, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                            <ui:TitledSlider MinWidth="400" Title="Alternate row background color (%)" Maximum="100" Minimum="0" Value="{Binding Plugin.Modules[StandingsModule].Settings.AlternateRowBackgroundColor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                ToolTip="Use a different background color to make alternate rows easier to read. 100% for maximum contrast, 0% to disable."/>
                         </StackPanel>
                     </StackPanel>
                 </styles:SHSection>
@@ -356,33 +342,20 @@
 
                         <StackPanel Orientation="Horizontal">
                             <styles:SHToggleCheckbox 
-                                ToolTip="Show the header with session information" 
+                                ToolTip="Show the header with the RELATIVE title and the weather"
                                 HorizontalAlignment="Left" Margin="0,0,4,8"
                                 IsChecked="{Binding Plugin.Modules[RelativeModule].Settings.HeaderVisible, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
                                 Show header
                             </styles:SHToggleCheckbox>
 
                             <styles:SHToggleCheckbox 
-                                ToolTip="Show the footer with additional session information" 
+                                ToolTip="Show the footer with incidents, strength of field and track temperature"
                                 HorizontalAlignment="Left" Margin="8,0,4,8"
                                 IsChecked="{Binding Plugin.Modules[RelativeModule].Settings.FooterVisible, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
                                 Show footer
                             </styles:SHToggleCheckbox>
                         </StackPanel>
 
-                        <StackPanel Orientation="Horizontal">
-                            <ui:TitledSlider Width="400" Title="Header Opacity (%)" Maximum="100" Minimum="0" Value="{Binding Plugin.Modules[RelativeModule].Settings.HeaderOpacity, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                        </StackPanel>
-
-                        <Label Content="Header Clock" Margin="0,0,0,0"/>
-                        <ComboBox Width="200" HorizontalAlignment="Left" Margin="0,0,4,10"
-                            SelectedValue="{Binding Plugin.Modules[RelativeModule].Settings.ClockType, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                            SelectedValuePath="Tag"
-                            ToolTip="Select whether to display computer time or in-sim track time">
-                            <ComboBoxItem Content="Computer Time" Tag="{x:Static local:RelativeClockType.ComputerTime}"/>
-                            <ComboBoxItem Content="Track Time (In-Sim)" Tag="{x:Static local:RelativeClockType.TrackTime}"/>
-                        </ComboBox>
-                        
                         <StackPanel Orientation="Horizontal">
                             <ui:TitledSlider HorizontalAlignment="Left" Width="400" Title="Width" Maximum="500" Minimum="200" Value="{Binding Plugin.Modules[RelativeModule].Settings.WidthPixels, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                 ToolTip="Minimum width of the overlay in pixels. Actual width might be larger if selected data fields don't fit."/>
@@ -483,8 +456,6 @@
                         </styles:SHToggleCheckbox>
 
                         <StackPanel Orientation="Horizontal">
-                            <ui:TitledSlider MinWidth="400" Width="400" Title="Alternate row background color (%)" Maximum="100" Minimum="0" Value="{Binding Plugin.Modules[RelativeModule].Settings.AlternateRowBackgroundColor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                ToolTip="Use a different background color to make alternate rows easier to read. 100% for maximum contrast, 0% to disable."/>
                             <ui:TitledSlider Width="400" Title="Background Opacity (%)" Maximum="100" Minimum="0" Value="{Binding Plugin.Modules[RelativeModule].Settings.BackgroundOpacity, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                         </StackPanel>
                     </StackPanel>

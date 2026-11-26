@@ -59,7 +59,9 @@ foreach ($c in @($vis['Childrens'])) { Set-RowHeight $c 20 $R }
 # per-row backgrounds caused seams; the panel is drawn once in the main dash
 $bg['Visible'] = $false; $bg['Bindings'].Remove('Visible') | Out-Null
 
-Set-PlayerHighlight $hl "if (!($isPlayer))`r`n`treturn false`r`nreturn getRelativeRowVisible($idx)" '[variable.headerWidth] - 2'
+Set-PlayerHighlight $hl ("if (!($isPlayer))`r`n`treturn false`r`n" +
+                         "if (!isnull(`$prop('benofficial2.Relative.HighlightPlayerRow'), true))`r`n`treturn false`r`n" +
+                         "return getRelativeRowVisible($idx)") '[variable.headerWidth] - 2'
 
 # make room for position cell + class timeline: shift everything right of the position
 foreach ($c in @($vis['Childrens'])) {
