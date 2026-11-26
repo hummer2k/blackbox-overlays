@@ -236,6 +236,15 @@ function New-PosCell([string]$isPlayerJs) {
   Set-Js $c 'BackgroundColor' "return ($isPlayerJs) ? '$Yellow' : '#0BFFFFFF'"
   $c
 }
+# coloured badge (PIT, TOW, best/last lap) as a rounded pill, vertically inset like the rating badge
+function Set-Pill($item) {
+  $item['Top'] = 2.0; $item['Height'] = [double]($R - 4); $item['BorderStyle'] = New-Radius 4 4 4 4
+}
+# PIT / TOW inside benofficial2's 'Pit Status' group
+function Set-PitPills($row) {
+  $ps = Get-Child $row 'Pit Status'
+  foreach ($n in 'Pit', 'Tow') { $p = Get-Child $ps $n; if ($p) { Set-Pill $p } }
+}
 # timing values in iRacing's monospace style
 function Set-TimingMonospace($item) {
   $item['Font'] = $TimeFont; $item['FontWeight'] = $TimeWeight; $item['FontSize'] = $TimeSize

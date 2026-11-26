@@ -60,6 +60,7 @@ foreach ($c in @($vis['Childrens'])) {
   if ([double]$c['Left'] -ge 20 -or $hasLeftBinding) { Add-ToLeft $c $Shift }
 }
 foreach ($n in 'DriverName', 'GapToPlayer', 'Position In Class') { (Get-Child $vis $n)['FontSize'] = $NameSize }
+Set-PitPills $vis
 
 # timing value in the lighter column: starts 4px right of the pit/lap column, right-aligned, fixed-pitch digits
 $gapTxt = Get-Child $vis 'GapToPlayer'

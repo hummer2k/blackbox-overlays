@@ -122,10 +122,8 @@ foreach ($n in $colShift.Keys) { Add-ToLeft (Get-Child $row $n) $colShift[$n] }
 foreach ($n in 'Best Lap Time', 'Last Lap Time') { (Get-Child $row $n)['Width'] = [double]$TimeColW }
 
 # best / last lap highlights (purple / green) as rounded pills instead of full-height blocks
-foreach ($n in 'Best Lap Time', 'Last Lap Time', 'Delta Lap Time') {
-  $t = Get-Child $row $n
-  $t['Top'] = 2.0; $t['Height'] = [double]($R - 4); $t['BorderStyle'] = New-Radius 4 4 4 4
-}
+foreach ($n in 'Best Lap Time', 'Last Lap Time', 'Delta Lap Time') { Set-Pill (Get-Child $row $n) }
+Set-PitPills $row
 # iRacing-like fixed-pitch timing digits
 foreach ($n in 'Best Lap Time', 'Last Lap Time', 'Delta Lap Time', 'Gap to Leader', 'Interval', 'Pit Time') { Set-TimingMonospace (Get-Child $row $n) }
 
