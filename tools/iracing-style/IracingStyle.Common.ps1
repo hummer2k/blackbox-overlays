@@ -297,7 +297,9 @@ function Set-RatingStyle($rating, [int]$extra = $RatingExtra) {
   $borderJs = $borderBinding['Expression']
   if ($borderBinding['Interpreter'] -ne 1) { throw 'rating border colour is not a JS binding' }
   Set-Js $rating 'BackgroundColor' "const c = String((function(){`r`n$borderJs`r`n})() || '');`r`nreturn c.length >= 7 ? '#29' + c.replace('#', '').slice(-6) : 'Transparent';"
-  $rating['Top'] = 2.0; $rating['Height'] = [double]($R - 4); $rating['FontSize'] = 12.5
+  # iRacing: same ~10px digit height, but regular weight (not semibold)
+  $rating['Top'] = 2.0; $rating['Height'] = [double]($R - 4); $rating['FontSize'] = 12.0
+  $rating['Font'] = $Font; $rating['FontWeight'] = 'Normal'
   foreach ($k in 'RadiusTopLeft', 'RadiusTopRight', 'RadiusBottomLeft', 'RadiusBottomRight') { $rating['BorderStyle'][$k] = 5 }
   $rating['Width'] = [double]$rating['Width'] + $extra
   $f = $rating['Bindings']['Width']['Formula']
