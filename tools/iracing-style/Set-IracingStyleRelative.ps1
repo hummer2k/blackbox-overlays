@@ -175,11 +175,14 @@ if (@($wx.Values | Where-Object { -not (Test-Path $_) }).Count -eq 0) {
     if ($visJs) { Set-Js $g 'Visible' "return $visJs" }
     $g
   }
-  $windText = Get-Expr (Find-Item @{ Childrens = (Read-Dash $wx.Wind)['Screens'][0]['Items'] } 'Wind Text') 'Text'
+  $windItem = New-WeatherItem 'Wind' $wx.Wind 'Wind Arrow' "return ''" $windW "return $right - $windW" ''
+  # the original wind text binding defines windDirectionFromRadians() in its PreExpression: copy the whole binding
+  $origWind = Find-Item @{ Childrens = (Read-Dash $wx.Wind)['Screens'][0]['Items'] } 'Wind Text'
+  (Get-Child $windItem 'Wind Value')['Bindings']['Text'] = Copy-Deep $origWind['Bindings']['Text']
   $header['Childrens'] = @($header['Childrens']) + @(
     (New-WeatherItem 'Precip' $wx.Precip 'Rain Cloud' "return ($precipVal * 100).toFixed(0) + '%'" $pctW "return $right - $windW - (($wetVis) ? $pctW : 0) - $pctW" $precipVis),
     (New-WeatherItem 'Wetness' $wx.Wet 'Rain Drops' "return ($wetVal).toFixed(0) + '%'" $pctW "return $right - $windW - $pctW" $wetVis),
-    (New-WeatherItem 'Wind' $wx.Wind 'Wind Arrow' $windText $windW "return $right - $windW" '')
+    $windItem
   )
   "Weather added to header"
 } else { "Weather widgets not found next to the source - header without weather" }
