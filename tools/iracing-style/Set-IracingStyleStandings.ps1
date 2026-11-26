@@ -28,7 +28,10 @@ $name = 'benofficial2 - iRacing Multi-Class Standings'
 $Shift    = 20           # room for position cell + class timeline before the car number
 $OrigW    = 690          # benofficial2 dashboard width
 $OrigRowW = 641          # benofficial2 minimum row width
-$NewW     = $OrigW + $Shift
+$TimeColW = 72           # best/last columns: 65 -> 72 so Roboto Mono times fit inside the purple/green pills
+$TimeExtra = $TimeColW - 65
+$Widen    = $Shift + 2 * $TimeExtra   # total extra row width
+$NewW     = $OrigW + $Widen
 $ClassGap = 4            # space above each class block
 $ClassHdr = 24           # class header height (badge, SOF, drivers, column titles)
 
@@ -69,14 +72,20 @@ Initialize-Target $SourceDir $TargetDir "$name.djson"
 # ---------------- Class Standings (one widget per class) ----------------
 $csPath = Join-Path $TargetDir 'Class Standings.djson'
 $cs = Read-Dash $csPath
-$cs['BaseWidth'] = [int]($cs['BaseWidth'] + $Shift)
+$cs['BaseWidth'] = [int]($cs['BaseWidth'] + $Widen)
 (Get-Var $cs 'dashboardWidth')['ValueExpression']['Expression'] = "$NewW"
 (Get-Var $cs 'PlayerNameTextColor')['ValueExpression']['Expression'] = "'#FFCC00'"
 $v = Get-Var $cs 'variableWidth'
-$v['ValueExpression']['Expression'] = $v['ValueExpression']['Expression'].Replace("- $OrigRowW", "- $($OrigRowW + $Shift)").Replace("isnull(`$prop('benofficial2.Standings.Width'), 730)", "isnull(`$prop('benofficial2.Standings.Width'), 730) + $Shift")
-if ($v['ValueExpression']['Expression'] -notmatch "\+ $Shift") { throw 'variableWidth patch failed' }
+$v['ValueExpression']['Expression'] = $v['ValueExpression']['Expression'].Replace("- $OrigRowW", "- $($OrigRowW + $Widen)").Replace("isnull(`$prop('benofficial2.Standings.Width'), 730)", "isnull(`$prop('benofficial2.Standings.Width'), 730) + $Widen")
+if ($v['ValueExpression']['Expression'] -notmatch "\+ $Widen") { throw 'variableWidth patch failed' }
 $hw = Get-Var $cs 'headerWidth'
-$hw['ValueExpression']['Expression'] = $hw['ValueExpression']['Expression'].Replace("$OrigRowW +", "$($OrigRowW + $Shift) +")
+$hw['ValueExpression']['Expression'] = $hw['ValueExpression']['Expression'].Replace("$OrigRowW +", "$($OrigRowW + $Widen) +")
+# hidden best/last columns must free their new width
+foreach ($vn in 'BestOffset', 'LastOffset') { $o = Get-Var $cs $vn; $o['ValueExpression']['Expression'] = $o['ValueExpression']['Expression'].Replace('-67', "-$(67 + $TimeExtra)") }
+# class badge width: benofficial2 scales a measured text size for Roboto (x0.54); Inter is ~15% wider
+$cn = Get-Var $cs 'ClassNameWidth'
+$cn['ValueExpression']['Expression'] = $cn['ValueExpression']['Expression'].Replace('textSize * 0.54 + 4', 'textSize * 0.62 + 10')
+if ($cn['ValueExpression']['Expression'] -notmatch '0\.62') { throw 'ClassNameWidth patch failed' }
 
 $root   = $cs['Screens'][0]['Items'][0]
 $rowRep = Get-Child $root 'Row Repeat'
@@ -106,6 +115,11 @@ foreach ($c in @($row['Childrens'])) {
 $pos = Get-Child $row 'Position In Class'
 $pos['Left'] = [double]$PosLeft; $pos['Width'] = [double]$PosW; $pos['FontSize'] = $NameSize; $pos['HorizontalAlignment'] = 1
 Set-Js $pos 'TextColor' "return ($isPlayer) ? '$OnYellow' : '$TextWhite';"
+
+# wider best/last columns: everything right of them moves along
+$colShift = @{ 'Last Lap Time' = $TimeExtra; 'Delta Lap Time' = 2 * $TimeExtra; 'Tire Compound' = 2 * $TimeExtra; 'Pit Status' = 2 * $TimeExtra; 'Pit Time' = 2 * $TimeExtra }
+foreach ($n in $colShift.Keys) { Add-ToLeft (Get-Child $row $n) $colShift[$n] }
+foreach ($n in 'Best Lap Time', 'Last Lap Time') { (Get-Child $row $n)['Width'] = [double]$TimeColW }
 
 # best / last lap highlights (purple / green) as rounded pills instead of full-height blocks
 foreach ($n in 'Best Lap Time', 'Last Lap Time', 'Delta Lap Time') {
@@ -138,6 +152,13 @@ foreach ($c in @($hdr['Childrens'])) {
   if ($c['$type'] -match 'TextItem' -and $c['Name'] -ne 'Car Class') { $c['TextColor'] = $TextDim }
 }
 (Get-Child $hdr 'Car Class')['Top'] = 2.0
+# column titles follow the wider best/last columns
+$hdrShift = @{ 'Last' = $TimeExtra; 'Delta' = 2 * $TimeExtra; 'Pit' = 2 * $TimeExtra; 'Pit Time' = 2 * $TimeExtra }
+foreach ($n in $hdrShift.Keys) { Add-ToLeft (Get-Child $hdr $n) $hdrShift[$n] }
+foreach ($n in 'Best', 'Last') { (Get-Child $hdr $n)['Width'] = [double]$TimeColW }
+# "STINT" is right-aligned with 5px padding in 36px - too narrow for Inter: grow it to the left
+$stint = Get-Child $hdr 'Pit'
+Add-ToLeft $stint -10; $stint['Width'] = [double]$stint['Width'] + 10
 
 Set-Fonts @{ Childrens = @($root) }
 Write-Dash $csPath $cs
@@ -165,7 +186,7 @@ Add-Var $main 'panelHeight' ((Get-BlockLoopJs "isnull(`$prop('benofficial2.Stand
 
 # class blocks: new vertical layout
 $w = $repeat['Childrens'][0]
-$w['Width'] = [double]($w['Width'] + $Shift)
+$w['Width'] = [double]($w['Width'] + $Widen)
 Set-Js $w 'Top' ((Get-BlockLoopJs 'repeatindex() - 1') + 'return offset;')
 
 $chrome = New-PanelChrome "return isnull(`$prop('benofficial2.Standings.BackgroundOpacity'), 88)" '[variable.rowWidth]' '[variable.panelHeight]'
