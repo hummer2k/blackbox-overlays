@@ -112,12 +112,16 @@ foreach ($n in 'Best Lap Time', 'Last Lap Time', 'Delta Lap Time') {
   $t = Get-Child $row $n
   $t['Top'] = 2.0; $t['Height'] = [double]($R - 4); $t['BorderStyle'] = New-Radius 4 4 4 4
 }
+# iRacing-like fixed-pitch timing digits
+foreach ($n in 'Best Lap Time', 'Last Lap Time', 'Delta Lap Time', 'Gap to Leader', 'Interval', 'Pit Time') { Set-TimingMonospace (Get-Child $row $n) }
 
-$timeline = New-ClassTimeline $classColor $sameClass
+# class colour once per class widget; the ~25 timeline items per row read it via a cheap NCalc binding
+Add-Var $cs 'classColor' "return isnull(getClassColor($ci), '#FFFFFF')"
+$timeline = New-ClassTimeline '[variable.classColor]' $sameClass
 Insert-Children $row 2 (@($timeline | Where-Object { $_['Name'] -like 'Class Glow*' }) + @(New-PosCell $isPlayer) + @($timeline | Where-Object { $_['Name'] -notlike 'Class Glow*' }))
 
 $num = Get-Child $row 'Number'
-$hash = Set-NumberStyle $num "getStandingsProp($ci, $ri, 'Number')" $isPlayer $classColor "(49 + $Shift + `$prop('variable.PositionChangeOffset')) + 34 - 2"
+$hash = Set-NumberStyle $num "getStandingsProp($ci, $ri, 'Number')" $isPlayer '[variable.classColor]' "(49 + $Shift + `$prop('variable.PositionChangeOffset')) + 34 - 2"
 Insert-Children $row ([array]::IndexOf(@($row['Childrens']), $num) + 1) @($hash)
 
 # class header: no own background, rounded class badge, dim column titles, thin class-colour underline

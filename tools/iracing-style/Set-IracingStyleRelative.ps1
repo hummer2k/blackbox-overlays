@@ -66,19 +66,23 @@ $gapTxt = Get-Child $vis 'GapToPlayer'
 Add-ToLeft $gapTxt 4
 $gapTxt['HorizontalAlignment'] = 2
 $gpad = New-Dict; $gpad['PaddingRight'] = 6; $gapTxt['TextPadding'] = $gpad
-$gapTxt['UseMonospacedText'] = $true; $gapTxt['CharWidth'] = 9.0; $gapTxt['SpecialCharsWidth'] = 7.0
+Set-TimingMonospace $gapTxt
+Set-TimingMonospace (Get-Child $vis 'Last Lap Time')
 Set-Nc $gapTxt 'Width' ("[variable.headerWidth] - 1 - (" + (Get-Expr $gapTxt 'Left') + ")")
+
+# class colour once per row widget; the ~25 timeline items read it via a cheap NCalc binding
+Add-Var $row 'classColor' "return $classColor"
 
 $pos = Get-Child $vis 'Position In Class'
 $pos['Left'] = [double]$PosLeft; $pos['Width'] = [double]$PosW
 Set-Js $pos 'TextColor' "return ($isPlayer) ? '$OnYellow' : getRelativeTextColor($idx);"
 
-$timeline = New-ClassTimeline $classColor "getRelativeProp($idx, 'CarClassColor') == getRelativeProp(0, 'CarClassColor')"
+$timeline = New-ClassTimeline '[variable.classColor]' "getRelativeProp($idx, 'CarClassColor') == getRelativeProp(0, 'CarClassColor')"
 Insert-Children $vis 0 (@($timeline | Where-Object { $_['Name'] -like 'Class Glow*' }) + @(New-PosCell $isPlayer) + @($timeline | Where-Object { $_['Name'] -notlike 'Class Glow*' }))
 
 $num = Get-Child $vis 'Number'
 $numRight = [double]$num['Left'] + [double]$num['Width'] - 2
-$hash = Set-NumberStyle $num "getRelativeProp($idx, 'Number')" $isPlayer $classColor "$numRight"
+$hash = Set-NumberStyle $num "getRelativeProp($idx, 'Number')" $isPlayer '[variable.classColor]' "$numRight"
 Insert-Children $vis ([array]::IndexOf(@($vis['Childrens']), $num) + 1) @($hash)
 
 Set-Fonts @{ Childrens = $items }

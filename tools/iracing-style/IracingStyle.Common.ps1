@@ -26,6 +26,8 @@ $NameSize  = 14.0        # names / position / timing
 $NumSize   = 12.0        # car number ~ 0.5 R
 $NumChar   = 7.0         # monospaced digit width at $NumSize
 $FootSize  = 14.0
+$TimeChar  = 8.2         # iRacing timing: every digit on a fixed pitch (measured 10px @ 28px rows = 8.6; 8.2 keeps
+$TimeSep   = 6.5         # "1:46.414" inside benofficial2's 65px columns) and ':' '.' '-' nearly as wide
 $PosLeft   = 3; $PosW = 28
 $LineX     = 36          # 2px class timeline, centre at 37
 
@@ -218,6 +220,7 @@ function New-FooterCells([object[]]$cells, [string]$widthNc) {
     Set-Nc $lab 'Left' "$leftExpr + 12"; Set-Nc $lab 'Width' "$cw - 20"
     $val = New-Text "$label Value" 0 0 90 $R '' $TextWhite $FootSize 2
     Set-Nc $val 'Left' "$leftExpr + 12"; Set-Nc $val 'Width' "$cw - 20"
+    Set-TimingMonospace $val
     Set-Js $val 'Text' $expr
     $cellBg; $lab; $val
   }
@@ -229,23 +232,29 @@ function New-PosCell([string]$isPlayerJs) {
   Set-Js $c 'BackgroundColor' "return ($isPlayerJs) ? '$Yellow' : '#0BFFFFFF'"
   $c
 }
-# Class timeline: glow fading right (stacked strips overlapping rows by 0.5px = no seams), 2px line,
-# marker (square = $squareJs true, circle otherwise)
-function New-ClassTimeline([string]$classColorJs, [string]$squareJs) {
-  foreach ($w in 44, 36, 28, 20, 12, 6) {
-    $g = New-Rect "Class Glow $w" ($LineX + 2) -0.25 $w ($R + 0.5) '#FFFFFFFF' 7
-    Set-Js $g 'BackgroundColor' "return $classColorJs"
+# iRacing-like fixed-pitch timing digits
+function Set-TimingMonospace($item) {
+  $item['UseMonospacedText'] = $true; $item['CharWidth'] = $TimeChar; $item['SpecialCharsWidth'] = $TimeSep
+}
+# Class timeline: glow fading right, 2px line, marker (square = $squareJs true, circle otherwise).
+# The glow is 22 stacked 2px-stepped strips at 2% each (smooth, no visible blocks); they overlap neighbouring
+# rows by 0.5px so no seams appear when scaled. $colorNc must be a cheap NCalc expression (e.g. a dashboard
+# variable) because it is evaluated by ~25 items per row.
+function New-ClassTimeline([string]$colorNc, [string]$squareJs) {
+  for ($w = 44; $w -ge 2; $w -= 2) {
+    $g = New-Rect "Class Glow $w" ($LineX + 2) -0.25 $w ($R + 0.5) '#FFFFFFFF' 2
+    Set-Nc $g 'BackgroundColor' $colorNc
     $g
   }
   $line = New-Rect 'Class Line' $LineX -1 2 ($R + 2) '#FFFFFFFF' 100
-  Set-Js $line 'BackgroundColor' "return $classColorJs"
+  Set-Nc $line 'BackgroundColor' $colorNc
   $line
   $mk = 10
   foreach ($m in @(@('Marker Square', 2, $squareJs), @('Marker Circle', 5, "!($squareJs)"))) {
     $bs = New-Dict
     $bs['BorderColor'] = '#FFFFFFFF'; $bs['BorderTop'] = 2; $bs['BorderBottom'] = 2; $bs['BorderLeft'] = 2; $bs['BorderRight'] = 2
     $bs['RadiusTopLeft'] = $m[1]; $bs['RadiusTopRight'] = $m[1]; $bs['RadiusBottomLeft'] = $m[1]; $bs['RadiusBottomRight'] = $m[1]
-    $bs['Bindings'] = New-Dict; $bs['Bindings']['BorderColor'] = New-JsBinding "return $classColorJs"
+    $bs['Bindings'] = New-Dict; $bs['Bindings']['BorderColor'] = New-NcBinding $colorNc
     $marker = New-Rect $m[0] ($LineX + 1 - $mk / 2) (($R - $mk) / 2) $mk $mk $MarkerFill 100 $bs
     Set-Js $marker 'Visible' "return $($m[2])"
     $marker
@@ -253,7 +262,7 @@ function New-ClassTimeline([string]$classColorJs, [string]$squareJs) {
 }
 # Car number: smaller, white digits (yellow for the player), '#' in class colour, no coloured box.
 # Returns the extra '#' item; $numRightJs is the JS expression of the digits' right edge.
-function Set-NumberStyle($num, [string]$numberJs, [string]$isPlayerJs, [string]$classColorJs, [string]$numRightJs) {
+function Set-NumberStyle($num, [string]$numberJs, [string]$isPlayerJs, [string]$colorNc, [string]$numRightJs) {
   $num['BackgroundColor'] = '#00FFFFFF'; $num['TextColor'] = $TextWhite; $num['HorizontalAlignment'] = 2; $num['FontSize'] = $NumSize
   $pad = New-Dict; $pad['PaddingRight'] = 2; $num['TextPadding'] = $pad
   $num['UseMonospacedText'] = $true; $num['CharWidth'] = $NumChar; $num['SpecialCharsWidth'] = 4.0
@@ -262,7 +271,7 @@ function Set-NumberStyle($num, [string]$numberJs, [string]$isPlayerJs, [string]$
   Set-Js $num 'TextColor' "return ($isPlayerJs) ? '$Yellow' : '$TextWhite';"
   $hash = New-Text 'Number Hash' ([double]$num['Left']) 0 9 $R '#' '#FFFFFFFF' $NumSize 2
   Set-Js $hash 'Left' "const n = ('' + isnull($numberJs, '')).length;`r`nreturn ($numRightJs) - $NumChar * n - 9;"
-  Set-Js $hash 'TextColor' "return $classColorJs"
+  Set-Nc $hash 'TextColor' $colorNc
   $hash
 }
 # Player row: faint gold wash with rounded corners
