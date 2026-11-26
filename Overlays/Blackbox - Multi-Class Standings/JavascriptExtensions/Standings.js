@@ -18,25 +18,25 @@
 
 function getStandingsProp(classIdx, rowIdx, prop)
 {
-    return $prop('benofficial2.Standings.Class' + format(classIdx, '00') 
+    return $prop('Blackbox.Standings.Class' + format(classIdx, '00') 
         + '.Row' + format(rowIdx, '00')
         + '.' + prop);
 }
 
 function getStandingsClassProp(classIdx, prop)
 {
-    return $prop('benofficial2.Standings.Class' + format(classIdx, '00') 
+    return $prop('Blackbox.Standings.Class' + format(classIdx, '00') 
         + '.' + prop);
 }
 
 function isDividerVisible(classIdx)
 {
-    return isnull($prop('benofficial2.Standings.Class' + format(classIdx, '00') + '.LeadFocusedDividerVisible'), false);
+    return isnull($prop('Blackbox.Standings.Class' + format(classIdx, '00') + '.LeadFocusedDividerVisible'), false);
 }
 
 function isLeadFocusedRow(classIdx, rowIdx)
 {
-    const leadFocusedRows = $prop('benofficial2.Standings.LeadFocusedRows');
+    const leadFocusedRows = $prop('Blackbox.Standings.LeadFocusedRows');
     return isDividerVisible(classIdx) && (rowIdx < leadFocusedRows);
 }
 

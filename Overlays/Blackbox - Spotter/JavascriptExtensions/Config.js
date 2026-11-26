@@ -16,6 +16,6 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-// Note: The options that used to be in this file were moved to the benofficial2 plugin.
+// Note: The options that used to be in this file were moved to the Blackbox plugin.
 // The plugin should be listed in the left-side menu. It's not only easier to change
 // options there, but your settings will also persist when updating the overlays.

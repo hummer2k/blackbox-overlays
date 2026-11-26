@@ -9,9 +9,10 @@
   class timeline + markers + glow, left-rounded position cells, '#' in class colour, Inter font.
   The former header (session type, lap, time left) moves into footer cells (Lap, Left).
 
+  Normally run by tools\Build-Overlays.ps1 (upstream export -> this script -> Blackbox rebranding).
+
 .EXAMPLE
-  git checkout upstream/master -- "Overlays/benofficial2 - iRacing Multi-Class Standings"
-  .\tools\iracing-style\Set-IracingStyleStandings.ps1 -SourceDir "Overlays\benofficial2 - iRacing Multi-Class Standings" -TargetDir "Overlays\benofficial2 - iRacing Multi-Class Standings"
+  .\tools\Build-Overlays.ps1
 #>
 param(
   [Parameter(Mandatory)] [string]$SourceDir,

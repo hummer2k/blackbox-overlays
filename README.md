@@ -1,209 +1,100 @@
-# benofficial2's Official Overlays
-*Copyright 2023-2026 benofficial2*
+# Blackbox Overlays
 
-## Overview
+SimHub overlays for iRacing that look like iRacing's own (2025 UI) black boxes, with the extra data
+of a SimHub plugin:
 
-With benofficial2's Official Overlays you get a complete collection of overlays for [iRacing](https://www.iracing.com/). The overlays are made with [SimHub](https://www.simhubdash.com/download-2/), which means they are fully customizable, and are easy on CPU and memory so you get more FPS in-game. 
+| Overlay | What it shows |
+|---|---|
+| **Relative** | Cars ahead and behind on track, class timeline, iRating/licence, tyres, pit status, gap. Weather (precipitation, track wetness, wind) in the header; incidents, SOF and track temperature in the footer. |
+| **Multi-Class Standings** | Live leaderboard grouped by car class, with best/last lap, gaps and stint info. Lap and laps left in the footer. |
+| **Spotter** | Side-by-side bars next to the mirror and a rejoin helper when you are stopped or off track. |
 
-Completely free and supported by [donations](https://streamelements.com/benofficial2/tip).
+Everything else (fuel, delta, inputs, track map, ...) is left to the iRacing UI.
 
-<a href="https://youtu.be/BImJE4SwAlI?si=88_gHBtxQzkWsErQ&t=583">
-<p align="center">
-  <img src="Images/Screenshots/Overview-LMP3.png" width="1920"/>
-</p>
-</a>
+> **Based on [benofficial2's Official Overlays](https://github.com/fixfactory/bo2-official-overlays).**
+> The plugin's data logic and the original overlays are benofficial2's work. Blackbox trims the collection
+> down to the three overlays above, restyles Relative and Multi-Class Standings like iRacing's black boxes and
+> ships the plugin under its own name. Please report Blackbox issues here, not to benofficial2.
 
-> [!NOTE]
-> To see them in action, click the image above for a video demo.
+## Install
 
-### Included in the collection
+Requirements: [SimHub](https://www.simhubdash.com/download-2/) 9.12.8 or later, Windows PowerShell.
 
-- **[Inputs Telemetry](#inputs-telemetry)**: shows pedal inputs and a graph
-- **[Multi-Class Standings](#multi-class-standings)**: shows the live leaderboard in up to 4 car classes
-- **[Relative](#relative)**: shows drivers ahead / behind on track
-- **[Spotter](#spotter)**: shows orange bars when side-by-side with another car
-- **[Fuel Calculator](#fuel-calculator)**: shows fuel consumption, estimated pit lap and fuel to add.
-- **[Track Map](#track-map)**: shows cars on a map
-- **[Wind, Track Wetness & Precipitation](#wind-track-wetness--precipitation)**: shows weather-related data fields
-- **[Delta Bar](#delta-bar)**: gives you feedback on your pace with time and speed deltas
-- **[Highlighted Driver](#highlighted-driver)**: shows information about the currently spectated driver
-- **[Dash Overlay](#dash-overlay)**: shows various in-car settings and statuses (DRS, ERS, Fuel, BB, etc.)
-- **[Setup Fuel Calculator](#setup-fuel-calculator)**: when in garage, shows how much fuel is needed for the race
-- **[Setup Cover](#setup-cover)**: For streamers, hides the setup page when in garage
-- **[Twitch Chat](#twitch-chat)**: For streamers, shows your chat on screen
-- **[Launch Assist](#launch-assist)**: shows precise pedal inputs to nail a perfect start
+1. Build the plugin (see below) - this produces `Plugin\Blackbox.Plugin\bin\Release\Blackbox.Plugin.dll`.
+2. Close SimHub and run:
 
-## How to Install
+   ```powershell
+   .\tools\Install-Blackbox.ps1 -MigrateFromBenofficial2
+   ```
 
-[Download benofficial2's Official Overlays](https://github.com/fixfactory/bo2-official-overlays/releases) from the releases page and run the installer. Choose your Sim Hub folder as your installation folder.
+   This copies the overlays, fonts, images and the plugin into SimHub. `-MigrateFromBenofficial2` is only
+   needed once when switching over from benofficial2's plugin: it takes over your plugin settings and overlay
+   window positions and moves benofficial2's plugin and overlays into a `_Backup_benofficial2_<date>` folder
+   (nothing is deleted - both plugins would otherwise compute the same data twice).
+3. Start SimHub, enable the **Blackbox Plugin** when asked and turn on *Show in left main menu* to reach its
+   options.
 
-> [!TIP]
-> See the [Installation Guide](https://github.com/fixfactory/bo2-official-overlays/wiki/Installation-Guide) for a detailed walkthrough on how to install and setup the overlays the first time.
+Later updates: `git pull`, rebuild the plugin, close SimHub, run `.\tools\Install-Blackbox.ps1`.
 
-## Inputs Telemetry
+## Building the plugin
 
-This overlay shows the current driver inputs in real-time. A graph with **Pedal Input Traces** shows the recent inputs over time. This is useful to understand bad habits. It is modular meaning you can hide parts you don't need.
+The plugin is a .NET Framework 4.8 class library that references SimHub's DLLs.
 
-<p align="center">
-  <img src="Images/Screenshots/Inputs.png" width="500"/>
-</p>
+- Install the **Visual Studio 2022 Build Tools** (or Visual Studio) with the *.NET desktop build tools*
+  workload and the *.NET Framework 4.8 targeting pack*.
+- Set `SIMHUB_INSTALL_PATH` to SimHub's folder **with a trailing backslash**, e.g.
+  `C:\Program Files (x86)\SimHub\`.
+- In a *Developer PowerShell for VS 2022*:
 
-## Multi-Class Standings
+  ```powershell
+  msbuild Plugin\Blackbox.Plugin\Blackbox.Plugin.csproj -t:restore,build -p:Configuration=Release -p:RestorePackagesConfig=true
+  ```
 
-This overlay shows the live **Leaderboard** for up to 4 car classes. Optional columns: **Car Logo**, **Gap**, **Best Lap Time**, **Last Lap Time**, and **Delta**. See the **benofficial2 plugin** page (in the left menu) for all options.
+  The post-build step also copies the DLL into `SIMHUB_INSTALL_PATH` (SimHub must be closed).
 
-<p align="center">
-  <img src="Images/Screenshots/Standings-IR18.png" width="450"/>
-</p>
+Tests: `dotnet test Plugin\Blackbox.Tests`.
 
-> [!NOTE]
-> The old **Standings** overlay has been deprecated and will not be supported anymore. Please use the **Multi-Class Standings** overlay instead, which can be configured to look the same with only the player's car class.
+## Repository layout
 
-## Relative
+| Path | Content |
+|---|---|
+| `Overlays/` | The three overlays, **generated** by `tools\Build-Overlays.ps1` - don't edit by hand |
+| `Plugin/` | The Blackbox SimHub plugin (properties `Blackbox.*`, settings `PluginsData\Common\Blackbox.*.json`) |
+| `Images/` | Car logos, flags and tyre icons, installed to `ImageLibrary\Blackbox` |
+| `tools/Build-Overlays.ps1` | Rebuilds `Overlays/` from benofficial2's originals: iRacing style + rebranding |
+| `tools/Install-Blackbox.ps1` | Installs into SimHub |
+| `tools/iracing-style/` | The iRacing look (scripts, Inter/Roboto Mono fonts, icons) - see its [README](tools/iracing-style/README.md) |
+| `tools/upstream-ref.txt` | The benofficial2 commit the overlays are built from |
 
-This overlay shows the nearby drivers **Ahead & Behind** on-track. This includes cars from every car class. In blue are cars that are a lap down and in red are those a lap ahead. The **Out Lap Indicator** shows when a car is on an out-lap. The last column shows the **Gap** in seconds to that car. The header shows the **Strength of Field** and **Incident Count**. The temperature is the **Track Temperature** and the time is your computer's **Local Time**.
+### Taking over changes from benofficial2
 
-<p align="center">
-  <img src="Images/Screenshots/Relative.png" width="400"/>
-</p>
+The `upstream` remote points at benofficial2's repository.
 
-There's an optional footer (not enabled by default) that shows additional session information typically seen in the Standings header.
+```powershell
+git fetch upstream
+.\tools\Build-Overlays.ps1 -UpstreamRef upstream/master   # overlays
+git diff --stat                                           # check, then test in SimHub
+```
 
-## Spotter
+If the result is good, write the new commit hash into `tools\upstream-ref.txt`. Plugin changes have to be
+merged by hand (`git diff <old ref> upstream/master -- Plugin/benofficial2.Plugin`), since the plugin was
+renamed and trimmed here.
 
-This overlay shows orange bars when side-by-side with another car. This complements your audio spotter as it will show up the moment your spotter starts talking. The size of the orange bar gives your an idea of the amount of car overlap and how fast you are passing them so you can time the perfect move.
+Car, track and flair data (`Data/*.json`) are still downloaded at runtime from benofficial2's repository,
+so new cars and tracks keep working without a Blackbox update.
 
-<p align="center">
-  <img src="Images/Screenshots/Spotter.png" width="400"/>
-</p>
+## Credits & licence
 
-Also comes with a **Rejoin Helper** that will show up when stopped or off-track, telling you how safe it is to rejoin by giving you the gap to the next incoming car. Quicker than looking at Relatives.
+- **benofficial2** - [benofficial2's Official Overlays](https://github.com/fixfactory/bo2-official-overlays),
+  Copyright (C) 2023-2026 benofficial2. Blackbox is a modified version of it.
+- **Wotever** - [SimHub](https://www.simhubdash.com/).
+- **Romainrob** - [iRacing Extra Properties](https://www.simhubdash.com/community-2/dashboard-templates/romainrobs-collection/),
+  credited by benofficial2 as an inspiration.
+- Fonts: [Inter](https://rsms.me/inter/) and [Roboto Mono](https://fonts.google.com/specimen/Roboto+Mono),
+  both SIL Open Font License 1.1 (`tools/iracing-style/fonts`).
 
-<p align="center">
-  <img src="Images/Screenshots/RejoinHelper.png" width="400"/>
-</p>
+Blackbox is free software under the **GNU General Public License v3** (see [LICENSE](LICENSE)), like the
+project it is based on. All changes compared to benofficial2's version are in this repository's git history.
 
-Designed to be placed over the virtual mirror, but can be placed wherever you want it to be.
-
-## Fuel Calculator
-
-This overlay shows the fuel consumption, indicates when to pit and calculates how much fuel to add. It can also automatically set the fuel to add for you when entering pit lane. See the [documentation](https://github.com/fixfactory/bo2-official-overlays/wiki/Overlay-Documentation#fuel-calculator) for details.
-
-<p align="center">
-  <img src="Images/Screenshots/FuelCalc-Box.png" width="400"/>
-</p>
-
-## Track Map
-
-This overlay shows car positions on a map. Supports multi-class colors.
-
-<p align="center">
-  <img src="Images/Screenshots/Map-Multi.png" width="200"/>
-</p>
-
-## Wind, Track Wetness & Precipitation
-
-Three small overlays that show weather-related data fields.
-
-<p align="center">
-  <img src="Images/Screenshots/Weather.png" width="150"/>
-</p>
-
-## Delta Bar
-
-This overlay gives you feedback on your pace. The **Delta Time** (center) and **Delta Speed** (right) are relative to your session's best clean lap. In qualifying, they are relative to your all-time best lap. On the left, in a race, you get **Gap** and last lap **Interval** information about your nearest competitor ahead and behind. Useful to know if your are improving relative to them.
-
-<p align="center">
-  <img src="Images/Screenshots/Delta-Best.png" width="400"/>
-</p>
-
-This delta bar can help you improve your lap times by giving you on-the-spot feedback in a corner. Because the **Delta Speed** field is big enough, you'll be able to see it change color while keeping your eyes on the track. So you'll know instantly if your mid-corner speed was faster/slower for example. You'll learn quickly what works and what doesn't.
-
-<p align="center">
-  <img src="Images/Screenshots/Delta-White.png" width="400"/>
-</p>
-
-> [!NOTE]
-> If the delta bar doesn't show immediately, it is because it doesn't have a clean reference lap to compare against yet. It will show up once you complete a full lap without incident.
-
-<p align="center">
-  <img src="Images/Screenshots/Delta-Red.png" width="400"/>
-</p>
-
-## Highlighted Driver
-
-This overlay shows information about the currently spectated driver when spectating. Can optionally be shown when in-car as well.
-
-<p align="center">
-  <img src="Images/Screenshots/Highlighted-Driver.png" width="400"/>
-</p>
-
-## Dash Overlay
-
-This overlay shows various in-car settings and statuses. Useful when the in-game steering wheel is not visible in your FOV. The green boxes typically show statuses about "going faster" such as **DRS**, **ERS**, **P2P**, **OT** (Super Formula), and **Fuel Mix**.
-
-<p align="center">
-  <img src="Images/Screenshots/Dash-ERS-Green.png" width="350"/>
-</p>
-
-The yellow boxes are for **Fuel** and **Laps Remaining Estimate**. A **Pit Indicator** will pop up when it's time to pit. The orange boxes are for various in-car settings such as **Entry Diff**. And finally the red boxes are for **Brake Bias** and **ABS** adjustments.
-
-<p align="center">
-  <img src="Images/Screenshots/Dash-Pit.png" width="350"/>
-</p>
-
-## Setup Fuel Calculator
-
-This overlay shows up only when in the garage / setup screen and tells you how much fuel is needed to start the race. Supports heat races and will determine if the race is limited by time or laps when both are specified. Useful for leagues that have a custom race length.
-
-<p align="center">
-  <img src="Images/Screenshots/FuelCalc-2.png" width="350"/>
-</p>
-
-A blinking **Fuel Warning** lights up when you're about to grid with an under-fueled setup. Never start a race with a qualification setup again!
-
-<p align="center">
-  <img src="Images/Screenshots/Fuel-Warning.png" width="200"/>
-</p>
-
-## Setup Cover
-
-For streamers, this overlay shows an animation that hides your car setup values when entering the garage.
-
-## Twitch Chat
-
-For streamers, this overlay shows your chat on-screen so you can keep up with chat. Powered by [ChatIS](https://chatis.is2511.com/).
-
-<p align="center">
-  <img src="Images/Screenshots/Twitch-Chat.png" width="500"/>
-</p>
-
-## Launch Assist
-
-When stopped, this overlay shows precise pedal input bars to help you consistently hold a desired value. For example with the F1 W13, you set your clutch bitepoint to ~60% and hold 50% throttle. At 52% you might spin out, so this overlay helps you be consistent.
-
-<p align="center">
-  <img src="Images/Screenshots/Launch-Assist.png" width="80"/>
-</p>
-
-> [!TIP]
-> There's some randomness to the clutch bitepoint in iRacing, so make sure to experiment to find a safe value.
-
-## Help & Feedback
-
-For general help with using SimHub, don't hesitate to get help on the [official SimHub Discord server](https://discord.com/invite/nBBMuX7).
-
-For bug reports and feature requests, please [open an issue on Git Hub](https://github.com/fixfactory/bo2-official-overlays/issues).
-
-For help with the overlays, give feedback, and get early access to beta versions, please hop-in my Discord server: [Ben's Official Server](https://discord.gg/s2834nmdYx).
-
-## Credits & Thanks
-
-Thanks to **Wotever** for making [SimHub](https://www.simhubdash.com/download-2/). It is such a powerful and essential piece of sim-racing software. Consider [buying a license](https://www.simhubdash.com/get-a-license/) to support him.
-
-Thanks to **Romainrob** for making the excellent [iRacing Extra Properties](https://www.simhubdash.com/community-2/dashboard-templates/romainrobs-collection/) plugin and his collection of overlays which was a great inspiration.
-
-The overlays in this collection are made by **benofficial2**.
-If you like them, consider following me on [Twitch](https://www.twitch.tv/benofficial2), [YouTube](https://www.youtube.com/@benofficial2?sub_confirmation=1), [Bluesky](https://bsky.app/profile/benofficial2.bsky.social) or making a [donation](https://streamelements.com/benofficial2/tip).
-
-And thank *you* for using them!
+"iRacing" is a trademark of iRacing.com Motorsport Simulations, LLC. This project is not affiliated with
+or endorsed by iRacing or benofficial2.

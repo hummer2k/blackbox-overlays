@@ -18,12 +18,12 @@
 
 function isGameRunning()
 {
-    return isnull($prop('benofficial2.iRacingRunning'), false);
+    return isnull($prop('Blackbox.iRacingRunning'), false);
 }
 
 function isReplayPlaying()
 {
-    return isnull($prop('benofficial2.Session.ReplayPlaying'), false);
+    return isnull($prop('Blackbox.Session.ReplayPlaying'), false);
 }
 
 function isDriving()
@@ -38,17 +38,17 @@ function isInPitLane()
 
 function isRace()
 {
-    return isnull($prop('benofficial2.Session.Race'), false);
+    return isnull($prop('Blackbox.Session.Race'), false);
 }
 
 function isRaceStarted()
 {
-    return isnull($prop('benofficial2.Session.RaceStarted'), false);
+    return isnull($prop('Blackbox.Session.RaceStarted'), false);
 }
 
 function isRaceFinished()
 {
-    return isnull($prop('benofficial2.Session.RaceFinished'), false);
+    return isnull($prop('Blackbox.Session.RaceFinished'), false);
 }
 
 function isRaceInProgress()
@@ -58,7 +58,7 @@ function isRaceInProgress()
 
 function isQual()
 {
-    return isnull($prop('benofficial2.Session.Qual'), false);
+    return isnull($prop('Blackbox.Session.Qual'), false);
 }
 
 function isLoneQual()
@@ -69,10 +69,10 @@ function isLoneQual()
 
 function isPractice()
 {
-    return isnull($prop('benofficial2.Session.Practice'), false);
+    return isnull($prop('Blackbox.Session.Practice'), false);
 }
 
 function isOffline()
 {
-    return isnull($prop('benofficial2.Session.Offline'), false);
+    return isnull($prop('Blackbox.Session.Offline'), false);
 }

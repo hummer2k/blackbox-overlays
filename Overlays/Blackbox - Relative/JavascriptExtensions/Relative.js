@@ -18,11 +18,11 @@
 
 function getHighlightedDriverProp(prop)
 {
-    const carIdx = $prop('benofficial2.Highlighted.CarIdx')
+    const carIdx = $prop('Blackbox.Highlighted.CarIdx')
     if (carIdx >= 0)
-        return $prop('benofficial2.Highlighted.' + prop)
+        return $prop('Blackbox.Highlighted.' + prop)
 
-    return $prop('benofficial2.Player.' + prop)
+    return $prop('Blackbox.Player.' + prop)
 }
 
 function getRelativeProp(index, prop)
@@ -31,20 +31,20 @@ function getRelativeProp(index, prop)
         return getHighlightedDriverProp(prop)
             
     if (index > 0)
-        return $prop('benofficial2.Relative.Behind' + format(index - 1, '00') + '.' + prop);
+        return $prop('Blackbox.Relative.Behind' + format(index - 1, '00') + '.' + prop);
     
-    return $prop('benofficial2.Relative.Ahead' + format(Math.abs(index + 1), '00') + '.' + prop);
+    return $prop('Blackbox.Relative.Ahead' + format(Math.abs(index + 1), '00') + '.' + prop);
 }
 
 function getStandingsClassProp(classIdx, prop)
 {
-    return $prop('benofficial2.Standings.Class' + format(classIdx, '00') + '.' + prop);
+    return $prop('Blackbox.Standings.Class' + format(classIdx, '00') + '.' + prop);
 }
 
 function getRelativeRowVisible(index)
 {
     if (index == 0)
-        return isnull($prop('benofficial2.Highlighted.CarIdx'), -1) >= 0
+        return isnull($prop('Blackbox.Highlighted.CarIdx'), -1) >= 0
         //return isnull(getHighlightedDriverProp('CarIdx'), -1) >= 0
     
     return getRelativeProp(index, 'RowVisible');

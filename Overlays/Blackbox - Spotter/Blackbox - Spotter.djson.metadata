@@ -18,12 +18,12 @@
   "EnableOnDashboardMessaging": true,
   "PitScreensIndexs": [],
   "PreferredTouchMode": 0,
-  "SimHubVersion": "9.12.8",
+  "SimHubVersion": "9.12.6",
   "Category": null,
   "Title": null,
   "Description": null,
-  "Author": "twitch.tv/benofficial2",
-  "Width": 736.0,
-  "Height": 846.0,
+  "Author": "hummer2k (based on benofficial2)",
+  "Width": 712.0,
+  "Height": 135.0,
   "DashboardVersion": ""
 }

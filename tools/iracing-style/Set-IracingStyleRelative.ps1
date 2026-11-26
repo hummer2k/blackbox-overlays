@@ -7,10 +7,11 @@
   -SourceDir and -TargetDir may be the same folder, as long as it still contains the original files
   (the script refuses to run twice on already-styled files).
 
+  Normally run by tools\Build-Overlays.ps1 (upstream export -> this script -> Blackbox rebranding).
+  The Precipitation / Track Wetness / Wind widgets must be siblings of -SourceDir.
+
 .EXAMPLE
-  # In the repo, after pulling upstream changes:
-  git checkout upstream/master -- "Overlays/benofficial2 - iRacing Relative"
-  .\tools\iracing-style\Set-IracingStyleRelative.ps1 -SourceDir "Overlays\benofficial2 - iRacing Relative" -TargetDir "Overlays\benofficial2 - iRacing Relative"
+  .\tools\Build-Overlays.ps1
 #>
 param(
   [Parameter(Mandatory)] [string]$SourceDir,

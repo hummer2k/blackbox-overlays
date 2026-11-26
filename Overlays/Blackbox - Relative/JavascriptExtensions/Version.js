@@ -21,11 +21,11 @@ function checkVersion(versionName, versionNumber)
     if (root['hide'])
         return false;
 
-    const checkForUpdates = isnull($prop('benofficial2.CheckForUpdates'), true);
+    const checkForUpdates = isnull($prop('Blackbox.CheckForUpdates'), true);
     if (!checkForUpdates)
         return false;
 
-    const url = 'https://raw.githubusercontent.com/fixfactory/bo2-official-overlays/main/Versions.json';
+    const url = 'https://raw.githubusercontent.com/hummer2k/blackbox-overlays/main/Versions.json';
     const jsonStr = downloadstringasync(500, url);
 
     if (jsonStr) 
@@ -86,7 +86,7 @@ function getErrorMessage()
     if (!root['errormessage'])
         root['errormessage'] = ''
 
-    const errorMessage = isnull($prop('benofficial2.ErrorMessage'), '')
+    const errorMessage = isnull($prop('Blackbox.ErrorMessage'), '')
     if (errorMessage != '' && root['errormessage'] != errorMessage)
     {
         root['errormessage'] = errorMessage
