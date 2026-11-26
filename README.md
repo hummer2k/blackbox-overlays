@@ -83,8 +83,9 @@ To publish a release:
 
 1. Pick the next [semantic version](https://semver.org/) `MAJOR.MINOR.PATCH` (bug fix: patch, new option or
    visual change: minor, breaking change such as renamed properties or settings: major) and set it in
-   `Plugin/Blackbox.Plugin/Version.cs` (`CurrentVersion`, `BetaVersion = ""`) and in `Versions.json` (`plugin`) -
-   the update check in SimHub compares these.
+   `Plugin/Blackbox.Plugin/Version.cs` (`CurrentVersion`, `BetaVersion = ""`) and for every entry in
+   `Versions.json` - the update checks in SimHub compare these. Plugin and overlays share this one version:
+   run `tools\Build-Overlays.ps1`, which stamps it into the overlays.
 2. Commit, then tag and push: `git tag -a v1.1.0 -m "Blackbox Overlays 1.1.0"; git push origin main v1.1.0`.
 3. The workflow checks that the tag is semver and matches both files, builds everything and creates the GitHub release with
    the zip and generated release notes.

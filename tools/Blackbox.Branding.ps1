@@ -13,12 +13,19 @@ $WeatherSources = @('benofficial2 - iRacing Precipitation', 'benofficial2 - iRac
 $BlackboxPluginPrefix = 'Blackbox'   # = plugin class name = SimHub property prefix
 $BlackboxImageLibrary = 'Blackbox'   # ImageLibrary\Blackbox\{CarLogos,Flairs,Icons}
 $BlackboxVersionsUrl  = 'https://raw.githubusercontent.com/hummer2k/blackbox-overlays/main/Versions.json'
+$BlackboxReleasesUrl  = 'https://github.com/hummer2k/blackbox-overlays/releases'
+# One version for plugin and overlays: the plugin's CurrentVersion (semver) is stamped into every overlay
+$BlackboxVersion = [regex]::Match([IO.File]::ReadAllText((Join-Path (Split-Path $PSScriptRoot) 'Plugin\Blackbox.Plugin\Version.cs')),
+                                  'CurrentVersion\s*=\s*"([^"]+)"').Groups[1].Value
+if (-not $BlackboxVersion) { throw 'CurrentVersion not found in Plugin\Blackbox.Plugin\Version.cs' }
 
 # Rewrites one text in place: overlay names, plugin properties, image library, author, update URL.
 # Copyright headers ("benofficial2's Official Overlays", "Copyright (C) ... benofficial2") are kept on purpose.
 function Convert-BlackboxText([string]$t) {
   foreach ($old in $BlackboxOverlays.Keys) { $t = $t.Replace($old, $BlackboxOverlays[$old]) }
   $t = $t.Replace('https://raw.githubusercontent.com/fixfactory/bo2-official-overlays/main/Versions.json', $BlackboxVersionsUrl)
+  $t = $t.Replace('Download new version at https://github.com/fixfactory/bo2-official-overlays', "Download new version at $BlackboxReleasesUrl")
+  $t = [regex]::Replace($t, "(const g_VersionNumber = (?:'|\\u0027))[^'\\]+((?:'|\\u0027))", "`${1}$BlackboxVersion`${2}")
   $t = $t.Replace('library:benofficial2', "library:$BlackboxImageLibrary")
   $t = $t.Replace('twitch.tv/benofficial2', 'hummer2k (based on benofficial2)')
   $t = $t.Replace('benofficial2 plugin', 'Blackbox plugin')

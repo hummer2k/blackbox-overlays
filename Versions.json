@@ -1,6 +1,6 @@
 {
     "plugin":  "1.0.0",
-    "relative":  "5.0",
-    "multiclassstandings":  "5.1",
-    "spotter":  "4.1"
+    "relative":  "1.0.0",
+    "multiclassstandings":  "1.0.0",
+    "spotter":  "1.0.0"
 }
