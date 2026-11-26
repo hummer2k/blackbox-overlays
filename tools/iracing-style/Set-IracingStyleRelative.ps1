@@ -72,6 +72,7 @@ Set-RatingStyle (Get-Child $vis 'Rating')
 foreach ($n in 'Last Lap Time', 'Tire Compound', 'Pit Status', 'GapToPlayer') { Add-ToLeft (Get-Child $vis $n) $RatingExtra }
 foreach ($n in 'DriverName', 'GapToPlayer', 'Position In Class') { (Get-Child $vis $n)['FontSize'] = $NameSize }
 Set-PitPills $vis
+Set-IracingTyreIcons $vis
 
 # timing value in the lighter column: starts 4px right of the pit/lap column, right-aligned, fixed-pitch digits
 $gapTxt = Get-Child $vis 'GapToPlayer'

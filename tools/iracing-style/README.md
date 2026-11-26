@@ -54,6 +54,13 @@ The overlays' base sizes change (Relative: 500x266 -> 535x328, Multi-Class Stand
 690x695 -> 710x846), so resize the overlay windows once in SimHub's overlay layout editor
 to avoid distortion.
 
+## Icons
+
+`New-IracingTyreIcons.ps1` renders iRacing-style tyre icons into `images/` (currently the wet tyre:
+dark disc, dark blue ring `#0159CF`, white W). They are referenced from benofficial2's image library
+(`Images/Icons` in the repo, `C:\Program Files (x86)\SimHub\ImageLibrary\benofficial2\Icons` in SimHub) -
+copy them there when installing manually.
+
 ## Notes
 
 - Position cells stay empty while benofficial2 has no live class position for a car
