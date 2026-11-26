@@ -1,0 +1,97 @@
+name: CI
+
+# Builds and tests the plugin, checks that Overlays/ matches tools/Build-Overlays.ps1 and packs a zip.
+# Pushing a tag v<version> (matching Version.cs and Versions.json) also publishes a GitHub release.
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  SIMHUB_VERSION: '9.13.8'   # compile references only; keep it at or below the minimum SimHub version in the README
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # Build-Overlays.ps1 exports benofficial2's originals from the history
+
+      - uses: microsoft/setup-msbuild@v2
+
+      - name: Cache SimHub reference assemblies
+        id: simhub-cache
+        uses: actions/cache@v4
+        with:
+          path: simhub-ref
+          key: simhub-ref-${{ env.SIMHUB_VERSION }}
+
+      - name: Get SimHub reference assemblies
+        if: steps.simhub-cache.outputs.cache-hit != 'true'
+        shell: powershell
+        run: .\tools\ci\Get-SimHubReferences.ps1 -Version $env:SIMHUB_VERSION -OutDir simhub-ref
+
+      - name: Restore packages
+        run: msbuild Plugin\Blackbox.Plugin.sln -t:restore -p:RestorePackagesConfig=true -v:minimal
+
+      - name: Build plugin
+        env:
+          SIMHUB_INSTALL_PATH: ${{ github.workspace }}\simhub-ref\
+        run: msbuild Plugin\Blackbox.Plugin\Blackbox.Plugin.csproj -p:Configuration=Release -p:SolutionDir="${{ github.workspace }}\Plugin\\" -p:PostBuildEvent= -v:minimal
+
+      - name: Build tests
+        env:
+          SIMHUB_INSTALL_PATH: ${{ github.workspace }}\simhub-ref\
+        run: msbuild Plugin\Blackbox.Tests\Blackbox.Tests.csproj -p:Configuration=Release -p:SolutionDir="${{ github.workspace }}\Plugin\\" -p:PostBuildEvent= -v:minimal
+
+      - name: Run tests
+        run: dotnet test Plugin\Blackbox.Tests\bin\Release\net48\Blackbox.Tests.dll --logger "console;verbosity=normal"
+
+      - name: Overlays match the build scripts
+        shell: powershell
+        run: |
+          .\tools\Build-Overlays.ps1
+          # .ressources are zips with fresh timestamps on every build, compare everything else
+          git diff --exit-code --stat -- Overlays ':(exclude)*.ressources'
+          if ($LASTEXITCODE) { Write-Error 'Overlays/ is out of date - run tools\Build-Overlays.ps1 and commit the result'; exit 1 }
+          git checkout -- Overlays
+
+      - name: Check release version
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: powershell
+        run: .\tools\ci\Test-ReleaseVersion.ps1 -Tag $env:GITHUB_REF_NAME
+
+      - name: Package
+        shell: powershell
+        run: |
+          $version = if ($env:GITHUB_REF_NAME -like 'v*') { $env:GITHUB_REF_NAME.Substring(1) } else { "dev-$($env:GITHUB_SHA.Substring(0, 7))" }
+          .\tools\ci\New-ReleasePackage.ps1 -Version $version -OutDir dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: blackbox-overlays
+          path: dist/*.zip
+          if-no-files-found: error
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: blackbox-overlays
+          path: dist
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" dist/*.zip --repo "$GITHUB_REPOSITORY" --title "Blackbox Overlays ${GITHUB_REF_NAME#v}" --generate-notes

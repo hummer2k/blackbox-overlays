@@ -38,7 +38,11 @@ $exe = (Resolve-Path (Join-Path $SimHubDir 'SimHubWPF.exe')).Path
 if (Get-Process SimHubWPF -ErrorAction SilentlyContinue | Where-Object { -not $_.Path -or $_.Path -eq $exe }) {
   throw 'SimHub is running - please close it first.'
 }
-if (-not $PluginDll) { $PluginDll = Join-Path $repo 'Plugin\Blackbox.Plugin\bin\Release\Blackbox.Plugin.dll' }
+if (-not $PluginDll) {
+  # release zip: DLL next to Install.cmd; repository: local Release build
+  $PluginDll = Join-Path $repo 'Blackbox.Plugin.dll'
+  if (-not (Test-Path $PluginDll)) { $PluginDll = Join-Path $repo 'Plugin\Blackbox.Plugin\bin\Release\Blackbox.Plugin.dll' }
+}
 if ($MigrateFromBenofficial2 -and ($SkipPlugin -or -not (Test-Path $PluginDll))) {
   throw "-MigrateFromBenofficial2 removes the benofficial2 plugin, so the Blackbox plugin must be built first ($PluginDll)."
 }

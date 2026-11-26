@@ -20,6 +20,13 @@ Everything else (fuel, delta, inputs, track map, ...) is left to the iRacing UI.
 
 Requirements: [SimHub](https://www.simhubdash.com/download-2/) 9.12.8 or later, Windows PowerShell.
 
+**From a release (no build tools needed):** download `Blackbox-Overlays-<version>.zip` from the
+[releases](https://github.com/hummer2k/blackbox-overlays/releases), unzip it, close SimHub and double-click
+`Install.cmd`. When switching over from benofficial2's plugin, run it once from a terminal as
+`Install.cmd -MigrateFromBenofficial2` instead (see step 2 below for what that does).
+
+**From the repository:**
+
 1. Build the plugin (see below) - this produces `Plugin\Blackbox.Plugin\bin\Release\Blackbox.Plugin.dll`.
 2. Close SimHub and run:
 
@@ -61,6 +68,25 @@ msbuild Plugin\Blackbox.Tests\Blackbox.Tests.csproj -p:Configuration=Release -p:
 dotnet test Plugin\Blackbox.Tests\bin\Release\net48\Blackbox.Tests.dll
 ```
 
+## CI and releases
+
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs on every push to `main` and on pull requests:
+
+- builds the plugin and the tests against SimHub's DLLs (downloaded from
+  [SimHub's GitHub releases](https://github.com/SHWotever/SimHub/releases) and cached; they are only compile
+  references and are never shipped),
+- runs the tests,
+- rebuilds the overlays with `tools\Build-Overlays.ps1` and fails if `Overlays/` differs from the committed files,
+- packs the release zip (`tools\ci\New-ReleasePackage.ps1`), downloadable as a build artifact.
+
+To publish a release:
+
+1. Set the new version in `Plugin/Blackbox.Plugin/Version.cs` (`CurrentVersion`, `BetaVersion = ""`) and in
+   `Versions.json` (`plugin`) - the update check in SimHub compares these.
+2. Commit, then tag and push: `git tag v1.1; git push origin main v1.1`.
+3. The workflow checks that the tag matches both files, builds everything and creates the GitHub release with
+   the zip and generated release notes.
+
 ## Repository layout
 
 | Path | Content |
@@ -72,6 +98,7 @@ dotnet test Plugin\Blackbox.Tests\bin\Release\net48\Blackbox.Tests.dll
 | `tools/Install-Blackbox.ps1` | Installs into SimHub |
 | `tools/iracing-style/` | The iRacing look (scripts, Inter/Roboto Mono fonts, icons) - see its [README](tools/iracing-style/README.md) |
 | `tools/upstream-ref.txt` | The benofficial2 commit the overlays are built from |
+| `tools/ci/` | CI helpers: SimHub reference DLLs, release zip, release version check |
 
 ### Taking over changes from benofficial2
 
