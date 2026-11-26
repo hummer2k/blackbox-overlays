@@ -26,8 +26,11 @@ $NameSize  = 14.0        # names / position / timing
 $NumSize   = 12.0        # car number ~ 0.5 R
 $NumChar   = 7.0         # monospaced digit width at $NumSize
 $FootSize  = 14.0
-$TimeChar  = 8.2         # iRacing timing: every digit on a fixed pitch (measured 10px @ 28px rows = 8.6; 8.2 keeps
-$TimeSep   = 6.5         # "1:46.414" inside benofficial2's 65px columns) and ':' '.' '-' nearly as wide
+# iRacing sets timing in a separate monospace font ('1' with a foot, square ':' and '.'): Roboto Mono (SIL OFL).
+# Advance width is 0.6 em, so 13px keeps "1:46.414" (8 x 7.8px) inside benofficial2's 65px columns.
+$TimeFont   = 'Roboto Mono'
+$TimeWeight = 'Bold'
+$TimeSize   = 13.0
 $PosLeft   = 3; $PosW = 28
 $LineX     = 36          # 2px class timeline, centre at 37
 
@@ -169,6 +172,7 @@ function Initialize-Target([string]$SourceDir, [string]$TargetDir, [string]$main
   if ($Font -eq 'Inter' -and (Test-Path $fontDir)) {
     $shf = Join-Path $TargetDir '_SHFonts'; if (-not (Test-Path $shf)) { New-Item -ItemType Directory $shf | Out-Null }
     Copy-Item (Join-Path $fontDir 'Inter-*.ttf') $shf -Force
+    Copy-Item (Join-Path $fontDir 'RobotoMono-*.ttf') $shf -Force
   }
   "Source: $SourceDir"; "Target: $TargetDir"; "Font:   $Font"
 }
@@ -232,9 +236,10 @@ function New-PosCell([string]$isPlayerJs) {
   Set-Js $c 'BackgroundColor' "return ($isPlayerJs) ? '$Yellow' : '#0BFFFFFF'"
   $c
 }
-# iRacing-like fixed-pitch timing digits
+# timing values in iRacing's monospace style
 function Set-TimingMonospace($item) {
-  $item['UseMonospacedText'] = $true; $item['CharWidth'] = $TimeChar; $item['SpecialCharsWidth'] = $TimeSep
+  $item['Font'] = $TimeFont; $item['FontWeight'] = $TimeWeight; $item['FontSize'] = $TimeSize
+  $item['UseMonospacedText'] = $false
 }
 # Class timeline: glow fading right, 2px line, marker (square = $squareJs true, circle otherwise).
 # The glow is 22 stacked 2px-stepped strips at 2% each (smooth, no visible blocks); they overlap neighbouring

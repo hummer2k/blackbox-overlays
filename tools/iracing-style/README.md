@@ -47,7 +47,7 @@ Point `-SourceDir` at an unmodified copy of the overlay and `-TargetDir` at SimH
 
 SimHub loads dash fonts from its global `DashFonts` folder. Importing the dash copies
 `_SHFonts` there automatically; when copying files manually, also copy
-`fonts\Inter-*.ttf` to `C:\Program Files (x86)\SimHub\DashFonts` and restart SimHub
+`fonts\*.ttf` to `C:\Program Files (x86)\SimHub\DashFonts` and restart SimHub
 (or run the script with `-Font 'Segoe UI'`).
 
 The overlays' base sizes change (Relative: 500x266 -> 535x328, Multi-Class Standings:
@@ -58,4 +58,7 @@ to avoid distortion.
 
 - Position cells stay empty while benofficial2 has no live class position for a car
   (out lap, no timed lap, in pits) - same as the original overlay.
-- Fonts: Inter by The Inter Project Authors, SIL Open Font License 1.1 (`fonts/LICENSE-Inter.txt`).
+- Fonts (both SIL Open Font License 1.1, shipped in each overlay's `_SHFonts`):
+  - Inter by The Inter Project Authors (`fonts/LICENSE-Inter.txt`) - names, labels, positions
+  - Roboto Mono by The Roboto Mono Project Authors (`fonts/LICENSE-RobotoMono.txt`) - timing values,
+    like iRacing's separate monospace timing font
