@@ -291,8 +291,12 @@ function Set-PitPills($row) {
 # $extra widens it (callers move the columns to its right by the same amount).
 $RatingExtra = 12
 function Set-RatingStyle($rating, [int]$extra = $RatingExtra) {
+  # fill = licence (outline) colour at ~16% (measured: B #33CC00 -> #1F381C over the panel)
   $rating['BackgroundColor'] = '#00000000'
-  if ($rating['Bindings'].ContainsKey('BackgroundColor')) { $rating['Bindings'].Remove('BackgroundColor') | Out-Null }
+  $borderBinding = $rating['BorderStyle']['Bindings']['BorderColor']['Formula']
+  $borderJs = $borderBinding['Expression']
+  if ($borderBinding['Interpreter'] -ne 1) { throw 'rating border colour is not a JS binding' }
+  Set-Js $rating 'BackgroundColor' "const c = String((function(){`r`n$borderJs`r`n})() || '');`r`nreturn c.length >= 7 ? '#29' + c.replace('#', '').slice(-6) : 'Transparent';"
   $rating['Top'] = 2.0; $rating['Height'] = [double]($R - 4); $rating['FontSize'] = 12.5
   foreach ($k in 'RadiusTopLeft', 'RadiusTopRight', 'RadiusBottomLeft', 'RadiusBottomRight') { $rating['BorderStyle'][$k] = 5 }
   $rating['Width'] = [double]$rating['Width'] + $extra
