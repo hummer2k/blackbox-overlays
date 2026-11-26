@@ -344,6 +344,13 @@ function Set-IracingTyreIcons($root) {
   $f['Expression'] = $f['Expression'].Replace("'Tire Wet.png'", "'Tire Wet iRacing.png'")
   if ($f['Expression'] -notmatch 'Tire Wet iRacing') { throw 'wet tyre icon patch failed' }
 }
+# benofficial2 places OUT / black-flag badges at the end of the name column without shortening the name, so
+# long names run under them. Shorten the name by the width of the visible badges ($badgeJs = px to subtract).
+function Set-NameBadgeRoom($name, [string]$badgeJs) {
+  $f = $name['Bindings']['Width']['Formula']
+  if ($f['Interpreter'] -ne 1) { throw 'name width is not a JS binding' }
+  $f['Expression'] = "return Math.max(0, (function(){`r`n" + $f['Expression'] + "`r`n})() - ($badgeJs));"
+}
 # timing values in iRacing's monospace style
 function Set-TimingMonospace($item) {
   $item['Font'] = $TimeFont; $item['FontWeight'] = $TimeWeight; $item['FontSize'] = $TimeSize

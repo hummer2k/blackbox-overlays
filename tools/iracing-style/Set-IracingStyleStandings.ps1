@@ -129,6 +129,8 @@ foreach ($n in 'Best Lap Time', 'Last Lap Time') { (Get-Child $row $n)['Width'] 
 foreach ($n in 'Best Lap Time', 'Last Lap Time', 'Delta Lap Time') { Set-Pill (Get-Child $row $n) }
 Set-PitPills $row
 Set-IracingTyreIcons $row
+# keep long names clear of the OUT badge (31px); the joker icon is already accounted for by benofficial2
+Set-NameBadgeRoom (Get-Child $row 'Driver Name') "isnull(getStandingsProp($ci, $ri, 'OutLap'), false) ? 34 : 0"
 # iRacing-like fixed-pitch timing digits
 foreach ($n in 'Best Lap Time', 'Last Lap Time', 'Delta Lap Time', 'Gap to Leader', 'Interval', 'Pit Time') { Set-TimingMonospace (Get-Child $row $n) }
 

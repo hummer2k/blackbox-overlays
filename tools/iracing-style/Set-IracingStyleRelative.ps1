@@ -73,6 +73,9 @@ foreach ($n in 'Last Lap Time', 'Tire Compound', 'Pit Status', 'GapToPlayer') { 
 foreach ($n in 'DriverName', 'GapToPlayer', 'Position In Class') { (Get-Child $vis $n)['FontSize'] = $NameSize }
 Set-PitPills $vis
 Set-IracingTyreIcons $vis
+# keep long names clear of the OUT badge (31px) and the black flag (20px)
+$blackJs = "(isnull(getRelativeProp($idx, 'SessionFlags'), 0) & (0x00010000 | 0x00080000 | 0x00100000))"
+Set-NameBadgeRoom (Get-Child $vis 'DriverName') "(getRelativeProp($idx, 'OutLap') ? 34 : 0) + ($blackJs ? 22 : 0)"
 
 # timing value in the lighter column: starts 4px right of the pit/lap column, right-aligned, fixed-pitch digits
 $gapTxt = Get-Child $vis 'GapToPlayer'
