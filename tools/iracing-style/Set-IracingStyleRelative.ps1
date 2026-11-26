@@ -163,7 +163,7 @@ if (@($wx.Values | Where-Object { -not (Test-Path $_) }).Count -eq 0) {
   $wetVal    = "Math.max(0, (100 / 6) * (isnull(`$prop('GameRawData.Telemetry.TrackWetness'), 0) - 1))"
   $precipVis = "!(isnull(`$prop('benofficial2.Precipitation.HideWhenZero'), true) && $precipVal == 0)"
   $wetVis    = "!(isnull(`$prop('benofficial2.TrackWetness.HideWhenZero'), true) && $wetVal == 0)"
-  $windW = 112; $pctW = 62; $right = "`$prop('variable.headerWidth') - 8"
+  $windW = 112; $pctW = 74; $right = "`$prop('variable.headerWidth') - 10"   # ~22px air between the items
   function New-WeatherItem([string]$name, [string]$srcPath, [string]$imgName, [string]$textJs, [double]$w, [string]$leftJs, [string]$visJs) {
     $srcDash = Read-Dash $srcPath
     $icon = Copy-Deep (Find-Item @{ Childrens = $srcDash['Screens'][0]['Items'] } $imgName)
