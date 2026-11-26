@@ -58,7 +58,7 @@ for (let i = 0; i < $limitExpr; i++)
 		if (classHeaderVisible) offset += $ClassHdr;
 	}
 }
-"@
+"@ -replace "`r`n", "`n"   # same output whether git checked this script out with LF or CRLF
 }
 # player name / timing colours: iRacing shows the player's row in yellow, everything else off-white
 function Set-StandingsTextColor($item) {
