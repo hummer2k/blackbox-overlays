@@ -33,7 +33,7 @@ $OrigW     = 500         # benofficial2 dashboard width
 # extra horizontal space per column (multiples of $ColGap, cumulative from left to right)
 $ColSteps  = [ordered]@{ 'Country Flag' = 1; 'DriverName' = 2; 'Black Flag' = 2; 'OutLap' = 2; 'Push To Pass' = 2; 'Car Logo' = 2;
                          'Rating' = 3; 'Last Lap Time' = 4; 'Tire Compound' = 5; 'Pit Status' = 6; 'GapToPlayer' = 7 }
-$ColExtra  = 7 * $ColGap
+$ColExtra  = 7 * $ColGap + $RatingExtra   # column gaps + the larger rating badge
 $Widen     = $Shift + $GapExtra + $ColExtra
 $NewW      = $OrigW + $Widen
 
@@ -67,6 +67,9 @@ foreach ($c in @($vis['Childrens'])) {
 }
 # column spacing (the name keeps its width; everything right of it moves along)
 foreach ($n in $ColSteps.Keys) { Add-ToLeft (Get-Child $vis $n) ($ColSteps[$n] * $ColGap) }
+# larger, outlined rating badge; columns to its right make room
+Set-RatingStyle (Get-Child $vis 'Rating')
+foreach ($n in 'Last Lap Time', 'Tire Compound', 'Pit Status', 'GapToPlayer') { Add-ToLeft (Get-Child $vis $n) $RatingExtra }
 foreach ($n in 'DriverName', 'GapToPlayer', 'Position In Class') { (Get-Child $vis $n)['FontSize'] = $NameSize }
 Set-PitPills $vis
 
@@ -78,6 +81,8 @@ $gpad = New-Dict; $gpad['PaddingRight'] = 6; $gapTxt['TextPadding'] = $gpad
 Set-TimingMonospace $gapTxt
 Set-TimingMonospace (Get-Child $vis 'Last Lap Time')
 Set-Nc $gapTxt 'Width' ("[variable.headerWidth] - 1 - (" + (Get-Expr $gapTxt 'Left') + ")")
+# player highlight ends before the timing column, like iRacing
+Set-Nc $hl 'Width' ("(" + (Get-Expr $gapTxt 'Left') + ") - 3")
 
 # class colour once per row widget; the ~25 timeline items read it via a cheap NCalc binding
 Add-Var $row 'classColor' "return $classColor"
@@ -115,6 +120,7 @@ $vwm['ValueExpression']['Expression'] = $vwm['ValueExpression']['Expression'].Re
 $vw = Get-Var $main 'variableWidth'
 $vw['ValueExpression']['Expression'] = $vw['ValueExpression']['Expression'].Replace("isnull(`$prop('benofficial2.Relative.Width'), 430)", "isnull(`$prop('benofficial2.Relative.Width'), 430) + $Widen")
 if ($vw['ValueExpression']['Expression'] -notmatch "\+ $Widen") { throw 'variableWidth patch failed' }
+Update-RatingOffset (Get-Var $main 'RatingOffset')
 $ho = Get-Var $main 'headerOffset'
 $ho['ValueExpression']['Expression'] = $ho['ValueExpression']['Expression'].Replace('return 23', "return $HeaderH")
 Add-Var $main 'panelHeight' "const maxRows = isnull(`$prop('benofficial2.Relative.MaxRows'), 3)`r`nconst footer = isnull(`$prop('benofficial2.Relative.FooterVisible'), true)`r`nreturn `$prop('variable.headerOffset') + (2 * maxRows + 1) * $R + (footer ? $FooterH : 6)"

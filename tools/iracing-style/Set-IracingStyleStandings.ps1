@@ -30,7 +30,7 @@ $OrigW    = 690          # benofficial2 dashboard width
 $OrigRowW = 641          # benofficial2 minimum row width
 $TimeColW = 72           # best/last columns: 65 -> 72 so Roboto Mono times fit inside the purple/green pills
 $TimeExtra = $TimeColW - 65
-$Widen    = $Shift + 2 * $TimeExtra   # total extra row width
+$Widen    = $Shift + 2 * $TimeExtra + $RatingExtra   # total extra row width (incl. larger rating badge)
 $NewW     = $OrigW + $Widen
 $ClassGap = 4            # space above each class block
 $ClassHdr = 24           # class header height (badge, SOF, drivers, column titles)
@@ -80,6 +80,7 @@ $v['ValueExpression']['Expression'] = $v['ValueExpression']['Expression'].Replac
 if ($v['ValueExpression']['Expression'] -notmatch "\+ $Widen") { throw 'variableWidth patch failed' }
 $hw = Get-Var $cs 'headerWidth'
 $hw['ValueExpression']['Expression'] = $hw['ValueExpression']['Expression'].Replace("$OrigRowW +", "$($OrigRowW + $Widen) +")
+Update-RatingOffset (Get-Var $cs 'RatingOffset')
 # hidden best/last columns must free their new width
 foreach ($vn in 'BestOffset', 'LastOffset') { $o = Get-Var $cs $vn; $o['ValueExpression']['Expression'] = $o['ValueExpression']['Expression'].Replace('-67', "-$(67 + $TimeExtra)") }
 # class badge width: benofficial2 scales a measured text size for Roboto (x0.54); Inter is ~15% wider
@@ -116,6 +117,9 @@ $pos = Get-Child $row 'Position In Class'
 $pos['Left'] = [double]$PosLeft; $pos['Width'] = [double]$PosW; $pos['FontSize'] = $NameSize; $pos['HorizontalAlignment'] = 1
 Set-Js $pos 'TextColor' "return ($isPlayer) ? '$OnYellow' : '$TextWhite';"
 
+# larger, outlined rating badge: everything right of it moves along
+Set-RatingStyle (Get-Child $row 'Rating')
+foreach ($n in 'Gap to Leader', 'Interval', 'Best Lap Time', 'Last Lap Time', 'Delta Lap Time', 'Tire Compound', 'Pit Status', 'Pit Time') { Add-ToLeft (Get-Child $row $n) $RatingExtra }
 # wider best/last columns: everything right of them moves along
 $colShift = @{ 'Last Lap Time' = $TimeExtra; 'Delta Lap Time' = 2 * $TimeExtra; 'Tire Compound' = 2 * $TimeExtra; 'Pit Status' = 2 * $TimeExtra; 'Pit Time' = 2 * $TimeExtra }
 foreach ($n in $colShift.Keys) { Add-ToLeft (Get-Child $row $n) $colShift[$n] }
@@ -150,7 +154,8 @@ foreach ($c in @($hdr['Childrens'])) {
   if ($c['$type'] -match 'TextItem' -and $c['Name'] -ne 'Car Class') { $c['TextColor'] = $TextDim }
 }
 (Get-Child $hdr 'Car Class')['Top'] = 2.0
-# column titles follow the wider best/last columns
+# column titles follow the larger rating badge and the wider best/last columns
+foreach ($n in 'Gap', 'Interval', 'Best', 'Last', 'Delta', 'Pit', 'Pit Time') { Add-ToLeft (Get-Child $hdr $n) $RatingExtra }
 $hdrShift = @{ 'Last' = $TimeExtra; 'Delta' = 2 * $TimeExtra; 'Pit' = 2 * $TimeExtra; 'Pit Time' = 2 * $TimeExtra }
 foreach ($n in $hdrShift.Keys) { Add-ToLeft (Get-Child $hdr $n) $hdrShift[$n] }
 foreach ($n in 'Best', 'Last') { (Get-Child $hdr $n)['Width'] = [double]$TimeColW }

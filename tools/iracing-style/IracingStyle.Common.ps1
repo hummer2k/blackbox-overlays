@@ -287,6 +287,25 @@ function Set-PitPills($row) {
   $ps = Get-Child $row 'Pit Status'
   foreach ($n in 'Pit', 'Tow') { $p = Get-Child $ps $n; if ($p) { Set-Pill $p } }
 }
+# License/iRating badge like iRacing: larger, transparent fill, licence-coloured outline and text.
+# $extra widens it (callers move the columns to its right by the same amount).
+$RatingExtra = 12
+function Set-RatingStyle($rating, [int]$extra = $RatingExtra) {
+  $rating['BackgroundColor'] = '#00000000'
+  if ($rating['Bindings'].ContainsKey('BackgroundColor')) { $rating['Bindings'].Remove('BackgroundColor') | Out-Null }
+  $rating['Top'] = 2.0; $rating['Height'] = [double]($R - 4); $rating['FontSize'] = 12.5
+  foreach ($k in 'RadiusTopLeft', 'RadiusTopRight', 'RadiusBottomLeft', 'RadiusBottomRight') { $rating['BorderStyle'][$k] = 5 }
+  $rating['Width'] = [double]$rating['Width'] + $extra
+  $f = $rating['Bindings']['Width']['Formula']
+  if ($f['Interpreter'] -eq 1) { $f['Expression'] = "return (function(){`r`n" + $f['Expression'] + "`r`n})() + $extra" }
+  else { $f['Expression'] = '(' + $f['Expression'] + ") + $extra" }
+}
+# when the badge is hidden completely (offset -90) its extra width must be freed as well
+function Update-RatingOffset($var, [int]$extra = $RatingExtra) {
+  $x = $var['ValueExpression']
+  $x['Expression'] = [regex]::Replace($x['Expression'], 'return offset\s*$', "return offset <= -90 ? offset - $extra : offset")
+  if ($x['Expression'] -notmatch [regex]::Escape("offset - $extra")) { throw 'RatingOffset patch failed' }
+}
 # timing values in iRacing's monospace style
 function Set-TimingMonospace($item) {
   $item['Font'] = $TimeFont; $item['FontWeight'] = $TimeWeight; $item['FontSize'] = $TimeSize
