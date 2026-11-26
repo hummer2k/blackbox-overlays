@@ -4,7 +4,7 @@
 
 .DESCRIPTION
   - The two columns become black-box panels: top-to-bottom gradient, 1px border, radius 8,
-    opacity = the Relative's 'Background Opacity' setting (the spotter has none of its own).
+    opacity = the Spotter's 'Background Opacity' setting.
   - The side-by-side bars use iRacing yellow (#FFCC00) with a small radius.
   - The blind spot warning triangle is recoloured to the same yellow and dark grey.
   - The rejoin helper gets the black-box border/radius and the Inter font.
@@ -33,7 +33,8 @@ Initialize-Target $SourceDir $TargetDir $mainFile
 $mainPath = Join-Path $TargetDir $mainFile
 $main = Read-Dash $mainPath
 
-$opacityJs = "return isnull(`$prop('benofficial2.Relative.BackgroundOpacity'), 100)"
+# Spotter.BackgroundOpacity is a Blackbox addition to the plugin (upstream has no spotter opacity)
+$opacityJs = "return isnull(`$prop('benofficial2.Spotter.BackgroundOpacity'), 60)"
 $widthNc   = '([benofficial2.Spotter.Width] + [benofficial2.Spotter.Border] * 2)'
 $heightNc  = '([benofficial2.Spotter.Height] + [variable.borderMax] * 2)'   # parenthesised: used as a factor in the shade bands
 $sides = [ordered]@{

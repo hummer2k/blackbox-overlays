@@ -504,7 +504,9 @@
 
                         <StackPanel Orientation="Horizontal">
                             <ui:TitledSlider Width="400" Title="Spotter Bar Spacing (%)" Maximum="100" Minimum="0" Value="{Binding Plugin.Modules[SpotterModule].Settings.Spacing, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0,10,0,0" 
-                                ToolTip="Distance between the Spotter's orange bars"/>
+                                ToolTip="Distance between the Spotter's bars"/>
+                            <ui:TitledSlider Width="400" Title="Background Opacity (%)" Maximum="100" Minimum="0" Value="{Binding Plugin.Modules[SpotterModule].Settings.BackgroundOpacity, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0,10,0,0"
+                                ToolTip="Opacity of the Spotter's background columns"/>
                         </StackPanel>
 
                         <styles:SHToggleCheckbox 

@@ -34,6 +34,7 @@ namespace Blackbox.Plugin
         public int Width { get; set; } = 15;
         public int Border { get; set; } = 3;
         public int Spacing { get; set; } = 100;
+        public int BackgroundOpacity { get; set; } = 60;
 
         // Legacy properties for backwards compatibility (saved pre 3.0)
         public string ThresholdString { get => DistanceThreshold.ValueString; set => DistanceThreshold.ValueString = value; }
@@ -56,6 +57,7 @@ namespace Blackbox.Plugin
             plugin.AttachDelegate(name: "Spotter.Width", valueProvider: () => Settings.Width);
             plugin.AttachDelegate(name: "Spotter.Border", valueProvider: () => Settings.Border);
             plugin.AttachDelegate(name: "Spotter.Spacing", valueProvider: () => Settings.Spacing);
+            plugin.AttachDelegate(name: "Spotter.BackgroundOpacity", valueProvider: () => Settings.BackgroundOpacity);
             plugin.AttachDelegate(name: "Spotter.OverlapAhead", valueProvider: () => OverlapAhead);
             plugin.AttachDelegate(name: "Spotter.OverlapBehind", valueProvider: () => OverlapBehind);
         }

@@ -14,7 +14,7 @@ rebranding happens afterwards in `tools\Blackbox.Branding.ps1`.
 |---|---|---|
 | Relative | `Set-IracingStyleRelative.ps1` | weather in the header (taken from benofficial2's Precipitation / Track Wetness / Wind widgets); footer: Inc, SOF, Track |
 | Multi-Class Standings | `Set-IracingStyleStandings.ps1` | per-class grouping kept; title `STANDINGS`; footer: Lap, Left |
-| Spotter | `Set-IracingStyleSpotter.ps1` | black-box columns (opacity = Relative's Background Opacity), yellow bars, recoloured blind spot icon |
+| Spotter | `Set-IracingStyleSpotter.ps1` | black-box columns (own Background Opacity setting), yellow bars, recoloured blind spot icon |
 
 Shared look (palette, metrics, panel, footer cells, position cell, class timeline, car number,
 lossless JSON writer) lives in `IracingStyle.Common.ps1`, so all overlays stay consistent.
