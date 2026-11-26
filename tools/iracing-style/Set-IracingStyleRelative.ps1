@@ -28,8 +28,14 @@ $rel = 'benofficial2 - iRacing Relative'
 
 $Shift     = 21          # car number right edge moves from 60 to 81 (room for pos cell + timeline)
 $GapExtra  = 14          # extra width for the timing column so it doesn't touch the pit/lap column
+$ColGap    = 4           # a little air between the columns right of the car number
 $OrigW     = 500         # benofficial2 dashboard width
-$NewW      = $OrigW + $Shift + $GapExtra
+# extra horizontal space per column (multiples of $ColGap, cumulative from left to right)
+$ColSteps  = [ordered]@{ 'Country Flag' = 1; 'DriverName' = 2; 'Black Flag' = 2; 'OutLap' = 2; 'Push To Pass' = 2; 'Car Logo' = 2;
+                         'Rating' = 3; 'Last Lap Time' = 4; 'Tire Compound' = 5; 'Pit Status' = 6; 'GapToPlayer' = 7 }
+$ColExtra  = 7 * $ColGap
+$Widen     = $Shift + $GapExtra + $ColExtra
+$NewW      = $OrigW + $Widen
 
 $idx        = "`$prop('variable.relativeIdx')"
 $isPlayer   = "$idx == 0"
@@ -59,6 +65,8 @@ foreach ($c in @($vis['Childrens'])) {
   $hasLeftBinding = $c['Bindings'] -and $c['Bindings'].ContainsKey('Left')
   if ([double]$c['Left'] -ge 20 -or $hasLeftBinding) { Add-ToLeft $c $Shift }
 }
+# column spacing (the name keeps its width; everything right of it moves along)
+foreach ($n in $ColSteps.Keys) { Add-ToLeft (Get-Child $vis $n) ($ColSteps[$n] * $ColGap) }
 foreach ($n in 'DriverName', 'GapToPlayer', 'Position In Class') { (Get-Child $vis $n)['FontSize'] = $NameSize }
 Set-PitPills $vis
 
@@ -103,10 +111,10 @@ $origHeader = Copy-Deep $header
 # (+Shift+GapExtra) so the name column keeps its original size
 (Get-Var $main 'dashboardWidth')['ValueExpression']['Expression'] = "$NewW"
 $vwm = Get-Var $main 'variableWidthMax'
-$vwm['ValueExpression']['Expression'] = $vwm['ValueExpression']['Expression'].Replace("- 444", "- $(444 + $Shift + $GapExtra)")
+$vwm['ValueExpression']['Expression'] = $vwm['ValueExpression']['Expression'].Replace("- 444", "- $(444 + $Widen)")
 $vw = Get-Var $main 'variableWidth'
-$vw['ValueExpression']['Expression'] = $vw['ValueExpression']['Expression'].Replace("isnull(`$prop('benofficial2.Relative.Width'), 430)", "isnull(`$prop('benofficial2.Relative.Width'), 430) + $($Shift + $GapExtra)")
-if ($vw['ValueExpression']['Expression'] -notmatch "\+ $($Shift + $GapExtra)") { throw 'variableWidth patch failed' }
+$vw['ValueExpression']['Expression'] = $vw['ValueExpression']['Expression'].Replace("isnull(`$prop('benofficial2.Relative.Width'), 430)", "isnull(`$prop('benofficial2.Relative.Width'), 430) + $Widen")
+if ($vw['ValueExpression']['Expression'] -notmatch "\+ $Widen") { throw 'variableWidth patch failed' }
 $ho = Get-Var $main 'headerOffset'
 $ho['ValueExpression']['Expression'] = $ho['ValueExpression']['Expression'].Replace('return 23', "return $HeaderH")
 Add-Var $main 'panelHeight' "const maxRows = isnull(`$prop('benofficial2.Relative.MaxRows'), 3)`r`nconst footer = isnull(`$prop('benofficial2.Relative.FooterVisible'), true)`r`nreturn `$prop('variable.headerOffset') + (2 * maxRows + 1) * $R + (footer ? $FooterH : 6)"
@@ -124,7 +132,7 @@ foreach ($spec in @(@('Ahead Repeat', "(maxRows - 1) * $R", -$R), @('Player', "m
 
 $chrome = New-PanelChrome "return isnull(`$prop('benofficial2.Relative.BackgroundOpacity'), 88)" '[variable.headerWidth]' '[variable.panelHeight]'
 # lighter strip behind the timing column, spanning all rows up to the panel edge
-$gapLeft = "401 + [variable.variableWidth] + [variable.RatingOffset] + [variable.LastLapTimeOffset] + [variable.TireCompoundOffset] + [variable.StintLapOffset] + $Shift + 4"
+$gapLeft = "401 + [variable.variableWidth] + [variable.RatingOffset] + [variable.LastLapTimeOffset] + [variable.TireCompoundOffset] + [variable.StintLapOffset] + $Shift + $ColExtra + 4"
 $gapCol = New-Rect 'Gap Column' 400 $HeaderH 44 220 '#FFFFFFFF' 5
 Set-Nc $gapCol 'Left' $gapLeft
 Set-Nc $gapCol 'Width' "[variable.headerWidth] - 1 - ($gapLeft)"
