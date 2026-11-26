@@ -189,39 +189,67 @@ function Update-Metadata($dash, [string]$metaPath, [double]$w, [double]$h) {
 }
 
 # ---------------- iRacing look: building blocks ----------------
-# One continuous rounded panel with a 1px border in the lighter (top) tone, darkening towards the bottom
-# and slightly blue (iRacing: #222228 top -> #0F0F17 bottom). Shade bands are inset by 1px so the border stays visible.
-function New-PanelChrome([string]$opacityJs, [string]$widthNc, [string]$heightNc) {
-  $pbs = New-Radius 8 8 8 8
-  $pbs['BorderColor'] = '#FF2C2C33'; $pbs['BorderTop'] = 1; $pbs['BorderBottom'] = 1; $pbs['BorderLeft'] = 1; $pbs['BorderRight'] = 1
-  $panel = New-Rect 'Panel' 0 0 444 300 '#FF26262E' 88 $pbs
-  Set-Js $panel 'BackgroundColor' "return `$prop('benofficial2.BackgroundColor')"
-  Set-Js $panel 'Opacity' $opacityJs
-  Set-Nc $panel 'Width' $widthNc
-  Set-Nc $panel 'Height' $heightNc
-  $panel
-  # Target transmission curve T(f) (f = 0 top .. 1 bottom), matched to the iRacing box; approximated by $bands
-  # nested shade bands (each runs to the bottom, so there are no gaps). Many thin steps = no visible banding.
-  $curve = @(@(0, 1.0), @(0.111, 0.98), @(0.222, 0.9506), @(0.333, 0.8936), @(0.444, 0.8221), @(0.556, 0.7481),
-             @(0.667, 0.6658), @(0.778, 0.5859), @(0.889, 0.5039), @(1.0, 0.45))
-  function Get-T([double]$f) {
-    for ($i = 1; $i -lt $curve.Count; $i++) {
-      if ($f -le $curve[$i][0]) { $a = $curve[$i - 1]; $b = $curve[$i]; return $a[1] + ($b[1] - $a[1]) * ($f - $a[0]) / ($b[0] - $a[0]) }
-    }
-    $curve[-1][1]
+# Measured on the iRacing box at 100% opacity: a strictly linear vertical gradient from the top colour
+# (benofficial2 'Background Color' setting, iRacing: #2B2B33) to #12121B, evenly bluish.
+$PanelBottom = '#FF12121B'
+$ShadeBands  = 48
+function New-Layer([string]$name, [object[]]$children) {
+  $o = New-Base 'Layer'
+  $o['Group'] = $false; $o['Repetitions'] = 0; $o['Childrens'] = @($children)
+  $o['Visible'] = $true; $o['BlinkPhasisInverted'] = $false; $o['Name'] = $name
+  $o['RenderingSkip'] = 0; $o['MinimumRefreshIntervalMS'] = 0.0; $o['Opacity'] = 100.0
+  $o['Bindings'] = New-Dict
+  $o
+}
+# Nested bands in the bottom colour; band k covers [k/(N+1) .. bottom]. Opacities are chosen so the
+# cumulative coverage grows linearly (= linear top->bottom gradient) without visible steps.
+function Get-ShadeAlphas([int]$n) {
+  $prevA = 0.0
+  for ($k = 1; $k -le $n; $k++) {
+    $a = ($k + 0.5) / ($n + 1)                       # coverage reached in band k (at its middle)
+    [Math]::Round((1 - (1 - $a) / (1 - $prevA)) * 100, 3)
+    $prevA = $a
   }
-  $bands = 48
-  $prevT = 1.0
-  for ($k = 1; $k -le $bands; $k++) {
-    $f = $k / ($bands + 1)
-    $t = Get-T ($f + 1 / ($bands + 1))          # darkness reached at the end of this step
-    $alpha = [Math]::Round((1 - $t / $prevT) * 100, 3); $prevT = $t
-    $b = New-Rect "Panel Shade $k" 1 0 442 100 '#FF00000C' $alpha (New-Radius 0 0 7 7)
-    Set-Nc $b 'Width' "$widthNc - 2"
-    Set-Nc $b 'Top' "$heightNc * $k / $($bands + 1)"
-    Set-Nc $b 'Height' "$heightNc * ($($bands + 1) - $k) / $($bands + 1) - 1"
+}
+# Gradient fill (top colour + shade bands). $clipTopJs/$clipBottomJs (optional) restrict it to a vertical
+# range while keeping the gradient aligned to the whole panel ($heightNc).
+function New-GradientFill([string]$prefix, [string]$leftNc, [string]$widthNc, [string]$heightNc, [string]$clipTopJs = '', [string]$clipBottomJs = '', $radiusTop = $null, $radiusBottom = $null) {
+  $alphas = @(Get-ShadeAlphas $ShadeBands)
+  $base = New-Rect "$prefix Fill" 0 0 444 300 '#FF2B2B33' 100 $radiusTop
+  Set-Js $base 'BackgroundColor' "return isnull(`$prop('benofficial2.BackgroundColor'), '#FF2B2B33')"
+  Set-Nc $base 'Left' $leftNc; Set-Nc $base 'Width' $widthNc
+  if ($clipTopJs) { Set-Js $base 'Top' "return $clipTopJs"; Set-Js $base 'Height' "return ($clipBottomJs) - ($clipTopJs)" }
+  else { Set-Nc $base 'Height' $heightNc }
+  $base
+  for ($k = 1; $k -le $ShadeBands; $k++) {
+    $b = New-Rect "$prefix Shade $k" 0 0 444 100 $PanelBottom $alphas[$k - 1] $radiusBottom
+    Set-Nc $b 'Left' $leftNc; Set-Nc $b 'Width' $widthNc
+    $start = "`$prop('variable.panelHeight') * $k / $($ShadeBands + 1)"
+    if ($clipTopJs) {
+      Set-Js $b 'Top' "return Math.max($clipTopJs, $start)"
+      Set-Js $b 'Height' "return Math.max(0, ($clipBottomJs) - Math.max($clipTopJs, $start))"
+    } else {
+      Set-Nc $b 'Top' "$heightNc * $k / $($ShadeBands + 1)"
+      Set-Nc $b 'Height' "$heightNc * ($($ShadeBands + 1) - $k) / $($ShadeBands + 1)"
+    }
     $b
   }
+}
+# The panel lives in a layer whose opacity is the benofficial2 'Background Opacity' setting, so the whole
+# gradient fades uniformly (like iRacing's opacity slider). A faint 1px border sits on top.
+function New-PanelChrome([string]$opacityJs, [string]$widthNc, [string]$heightNc) {
+  $fill = New-GradientFill 'Panel' '0' $widthNc $heightNc '' '' (New-Radius 8 8 8 8) (New-Radius 0 0 8 8)
+  $bs = New-Radius 8 8 8 8
+  $bs['BorderColor'] = '#09FFFFFF'; $bs['BorderTop'] = 1; $bs['BorderBottom'] = 1; $bs['BorderLeft'] = 1; $bs['BorderRight'] = 1
+  $border = New-Rect 'Panel Border' 0 0 444 300 '#00000000' 100 $bs
+  Set-Nc $border 'Width' $widthNc; Set-Nc $border 'Height' $heightNc
+  $layer = New-Layer 'Panel' (@($fill) + @($border))
+  Set-Js $layer 'Opacity' $opacityJs
+  $layer
+}
+# iRacing draws some areas (Relative timing column) fully opaque, so they look lighter when the panel is translucent.
+function New-OpaqueRegion([string]$name, [string]$leftNc, [string]$widthNc, [string]$topJs, [string]$bottomJs) {
+  New-Layer $name @(New-GradientFill $name $leftNc $widthNc '[variable.panelHeight]' $topJs $bottomJs)
 }
 function New-Title([string]$text) { New-Text 'Title' 9 4 200 $R $text $Yellow 15.0 0 'Bold' }
 
@@ -232,7 +260,7 @@ function New-FooterCells([object[]]$cells, [string]$widthNc) {
   for ($col = 0; $col -lt $cols; $col++) {
     $label = $cells[$col][0]; $expr = $cells[$col][1]
     $leftExpr = "$PosLeft + $col * ($cw + $CellGap)"
-    $cellBg = New-Rect "$label Cell" 0 0 100 $R '#FFFFFFFF' 4 (New-Radius 4 4 4 4)
+    $cellBg = New-Rect "$label Cell" 0 0 100 $R '#FFFFFFFF' 2.2 (New-Radius 4 4 4 4)   # iRacing: +5 over the panel
     Set-Nc $cellBg 'Left' $leftExpr; Set-Nc $cellBg 'Width' $cw
     $lab = New-Text "$label Label" 0 0 90 $R $label $Yellow $FootSize 0
     Set-Nc $lab 'Left' "$leftExpr + 12"; Set-Nc $lab 'Width' "$cw - 20"
@@ -246,8 +274,8 @@ function New-FooterCells([object[]]$cells, [string]$widthNc) {
 
 # Position cell: only left corners rounded, subtle +4% lift, solid yellow for the player. 1px hairline between rows.
 function New-PosCell([string]$isPlayerJs) {
-  $c = New-Rect 'Pos Cell' $PosLeft 0.5 $PosW ($R - 1) '#0BFFFFFF' 100 (New-Radius 4 0 4 0)
-  Set-Js $c 'BackgroundColor' "return ($isPlayerJs) ? '$Yellow' : '#0BFFFFFF'"
+  $c = New-Rect 'Pos Cell' $PosLeft 0.5 $PosW ($R - 1) '#06FFFFFF' 100 (New-Radius 4 0 4 0)   # iRacing: +4 over the panel
+  Set-Js $c 'BackgroundColor' "return ($isPlayerJs) ? '$Yellow' : '#06FFFFFF'"
   $c
 }
 # coloured badge (PIT, TOW, best/last lap) as a rounded pill, vertically inset like the rating badge
@@ -302,9 +330,9 @@ function Set-NumberStyle($num, [string]$numberJs, [string]$isPlayerJs, [string]$
   Set-Nc $hash 'TextColor' $colorNc
   $hash
 }
-# Player row: faint gold wash with rounded corners
+# Player row: muted gold wash with rounded corners (iRacing at 100%: +15/+11/-6 over the panel)
 function Set-PlayerHighlight($hl, [string]$visibleJs, [string]$widthNc) {
-  $hl['BackgroundColor'] = $Yellow; $hl['Opacity'] = 9.0
+  $hl['BackgroundColor'] = '#FF8A6E00'; $hl['Opacity'] = 15.0
   $hl['Left'] = 1.0; $hl['Top'] = 1.0; $hl['Height'] = [double]($R - 2)
   $hl['BorderStyle'] = New-Radius 4 4 4 4
   Set-Js $hl 'Visible' $visibleJs

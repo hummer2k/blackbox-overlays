@@ -131,13 +131,9 @@ foreach ($spec in @(@('Ahead Repeat', "(maxRows - 1) * $R", -$R), @('Player', "m
 }
 
 $chrome = New-PanelChrome "return isnull(`$prop('benofficial2.Relative.BackgroundOpacity'), 88)" '[variable.headerWidth]' '[variable.panelHeight]'
-# lighter strip behind the timing column, spanning all rows up to the panel edge
+# timing column: iRacing draws it fully opaque (same gradient), so it reads lighter when the panel is translucent
 $gapLeft = "401 + [variable.variableWidth] + [variable.RatingOffset] + [variable.LastLapTimeOffset] + [variable.TireCompoundOffset] + [variable.StintLapOffset] + $Shift + $ColExtra + 4"
-$gapCol = New-Rect 'Gap Column' 400 $HeaderH 44 220 '#FFFFFFFF' 5
-Set-Nc $gapCol 'Left' $gapLeft
-Set-Nc $gapCol 'Width' "[variable.headerWidth] - 1 - ($gapLeft)"
-Set-Nc $gapCol 'Top' '[variable.headerOffset]'
-Set-Js $gapCol 'Height' "return (2 * isnull(`$prop('benofficial2.Relative.MaxRows'), 3) + 1) * $R"
+$gapCol = New-OpaqueRegion 'Gap Column' $gapLeft "[variable.headerWidth] - 1 - ($gapLeft)" "`$prop('variable.headerOffset')" "(`$prop('variable.headerOffset') + (2 * isnull(`$prop('benofficial2.Relative.MaxRows'), 3) + 1) * $R)"
 Insert-Children $layer 0 (@($chrome) + @($gapCol))
 
 $header['Childrens'] = @(New-Title 'RELATIVE')
