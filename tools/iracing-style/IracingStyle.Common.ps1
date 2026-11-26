@@ -200,12 +200,26 @@ function New-PanelChrome([string]$opacityJs, [string]$widthNc, [string]$heightNc
   Set-Nc $panel 'Width' $widthNc
   Set-Nc $panel 'Height' $heightNc
   $panel
-  $shadeOpacity = 2, 3, 6, 8, 9, 11, 12, 14
-  foreach ($k in 1..8) {
-    $b = New-Rect "Panel Shade $k" 1 0 442 100 '#FF00000C' $shadeOpacity[$k - 1] (New-Radius 0 0 7 7)
+  # Target transmission curve T(f) (f = 0 top .. 1 bottom), matched to the iRacing box; approximated by $bands
+  # nested shade bands (each runs to the bottom, so there are no gaps). Many thin steps = no visible banding.
+  $curve = @(@(0, 1.0), @(0.111, 0.98), @(0.222, 0.9506), @(0.333, 0.8936), @(0.444, 0.8221), @(0.556, 0.7481),
+             @(0.667, 0.6658), @(0.778, 0.5859), @(0.889, 0.5039), @(1.0, 0.45))
+  function Get-T([double]$f) {
+    for ($i = 1; $i -lt $curve.Count; $i++) {
+      if ($f -le $curve[$i][0]) { $a = $curve[$i - 1]; $b = $curve[$i]; return $a[1] + ($b[1] - $a[1]) * ($f - $a[0]) / ($b[0] - $a[0]) }
+    }
+    $curve[-1][1]
+  }
+  $bands = 48
+  $prevT = 1.0
+  for ($k = 1; $k -le $bands; $k++) {
+    $f = $k / ($bands + 1)
+    $t = Get-T ($f + 1 / ($bands + 1))          # darkness reached at the end of this step
+    $alpha = [Math]::Round((1 - $t / $prevT) * 100, 3); $prevT = $t
+    $b = New-Rect "Panel Shade $k" 1 0 442 100 '#FF00000C' $alpha (New-Radius 0 0 7 7)
     Set-Nc $b 'Width' "$widthNc - 2"
-    Set-Nc $b 'Top' "$heightNc * $k / 9"
-    Set-Nc $b 'Height' "$heightNc * (9 - $k) / 9 - 1"
+    Set-Nc $b 'Top' "$heightNc * $k / $($bands + 1)"
+    Set-Nc $b 'Height' "$heightNc * ($($bands + 1) - $k) / $($bands + 1) - 1"
     $b
   }
 }
