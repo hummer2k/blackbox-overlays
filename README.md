@@ -47,12 +47,19 @@ The plugin is a .NET Framework 4.8 class library that references SimHub's DLLs.
 - In a *Developer PowerShell for VS 2022*:
 
   ```powershell
-  msbuild Plugin\Blackbox.Plugin\Blackbox.Plugin.csproj -t:restore,build -p:Configuration=Release -p:RestorePackagesConfig=true
+  msbuild Plugin\Blackbox.Plugin.sln -t:restore -p:RestorePackagesConfig=true
+  msbuild Plugin\Blackbox.Plugin\Blackbox.Plugin.csproj -p:Configuration=Release -p:SolutionDir="$PWD\Plugin\\" -p:PostBuildEvent=
   ```
 
-  The post-build step also copies the DLL into `SIMHUB_INSTALL_PATH` (SimHub must be closed).
+  `-p:PostBuildEvent=` skips the post-build step that would copy the DLL straight into `SIMHUB_INSTALL_PATH`;
+  `tools\Install-Blackbox.ps1` does that instead.
 
-Tests: `dotnet test Plugin\Blackbox.Tests`.
+Tests (need the .NET SDK on `PATH`):
+
+```powershell
+msbuild Plugin\Blackbox.Tests\Blackbox.Tests.csproj -p:Configuration=Release -p:SolutionDir="$PWD\Plugin\\" -p:PostBuildEvent=
+dotnet test Plugin\Blackbox.Tests\bin\Release\net48\Blackbox.Tests.dll
+```
 
 ## Repository layout
 
