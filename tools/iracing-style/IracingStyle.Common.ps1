@@ -176,6 +176,29 @@ function Initialize-Target([string]$SourceDir, [string]$TargetDir, [string]$main
   }
   "Source: $SourceDir"; "Target: $TargetDir"; "Font:   $Font"
 }
+# Copies named images from another dashboard (its 'Images' list + .ressources zip) into $dash / $ressPath.
+function Copy-DashImages($dash, [string]$ressPath, [string]$srcDashPath, [string[]]$names) {
+  Add-Type -AssemblyName System.IO.Compression, System.IO.Compression.FileSystem
+  $src = Read-Dash $srcDashPath
+  $srcRess = "$srcDashPath.ressources"
+  $list = New-Object System.Collections.ArrayList
+  if ($dash['Images']) { $list.AddRange(@($dash['Images'])) }
+  $zipIn = [IO.Compression.ZipFile]::OpenRead($srcRess)
+  $zipOut = [IO.Compression.ZipFile]::Open($ressPath, [IO.Compression.ZipArchiveMode]::Update)
+  try {
+    foreach ($n in $names) {
+      $meta = @($src['Images']) | Where-Object { $_['Name'] -eq $n } | Select-Object -First 1
+      if (-not $meta) { throw "image '$n' not found in $srcDashPath" }
+      $file = $n + $meta['Extension']
+      $entry = $zipIn.GetEntry($file); if (-not $entry) { throw "image file '$file' not found in $srcRess" }
+      $old = $zipOut.GetEntry($file); if ($old) { $old.Delete() }
+      $dst = $zipOut.CreateEntry($file)
+      $in = $entry.Open(); $out = $dst.Open(); $in.CopyTo($out); $out.Dispose(); $in.Dispose()
+      if (-not (@($list) | Where-Object { $_['Name'] -eq $n })) { [void]$list.Add((Copy-Deep $meta)) }
+    }
+  } finally { $zipOut.Dispose(); $zipIn.Dispose() }
+  $dash['Images'] = $list.ToArray()
+}
 # keeps the dashboard metadata (embedded and/or separate .metadata file) in sync with the new base size
 function Update-Metadata($dash, [string]$metaPath, [double]$w, [double]$h) {
   $dash['BaseWidth'] = [int]$w; $dash['BaseHeight'] = [int]$h   # integers, as in the originals

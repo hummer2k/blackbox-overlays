@@ -145,6 +145,45 @@ Insert-Children $layer 0 (@($chrome) + @($gapCol))
 $header['Childrens'] = @(New-Title 'RELATIVE')
 $header['Height'] = [double]$HeaderH
 
+# ---------------- weather in the header (benofficial2's Precipitation / Track Wetness / Wind widgets) ----------------
+# right-aligned: [cloud] precip %  [drops] track wetness %  [arrow] wind; precip/wetness hide at 0% when the
+# widget's 'Hide when zero' setting is on, the remaining items move right.
+$srcRoot = Split-Path $SourceDir
+$wx = @{
+  Precip = Join-Path $srcRoot 'benofficial2 - iRacing Precipitation\benofficial2 - iRacing Precipitation.djson'
+  Wet    = Join-Path $srcRoot 'benofficial2 - iRacing Track Wetness\benofficial2 - iRacing Track Wetness.djson'
+  Wind   = Join-Path $srcRoot 'benofficial2 - iRacing Wind\benofficial2 - iRacing Wind.djson'
+}
+if (@($wx.Values | Where-Object { -not (Test-Path $_) }).Count -eq 0) {
+  $ress = Join-Path $TargetDir "$rel.djson.ressources"
+  Copy-DashImages $main $ress $wx.Precip @('Rain Cloud')
+  Copy-DashImages $main $ress $wx.Wet    @('Rain Drops')
+  Copy-DashImages $main $ress $wx.Wind   @('Wind-Arrow')
+  $precipVal = "isnull(`$prop('GameRawData.Telemetry.Precipitation'), 0)"
+  $wetVal    = "Math.max(0, (100 / 6) * (isnull(`$prop('GameRawData.Telemetry.TrackWetness'), 0) - 1))"
+  $precipVis = "!(isnull(`$prop('benofficial2.Precipitation.HideWhenZero'), true) && $precipVal == 0)"
+  $wetVis    = "!(isnull(`$prop('benofficial2.TrackWetness.HideWhenZero'), true) && $wetVal == 0)"
+  $windW = 112; $pctW = 62; $right = "`$prop('variable.headerWidth') - 8"
+  function New-WeatherItem([string]$name, [string]$srcPath, [string]$imgName, [string]$textJs, [double]$w, [string]$leftJs, [string]$visJs) {
+    $srcDash = Read-Dash $srcPath
+    $icon = Copy-Deep (Find-Item @{ Childrens = $srcDash['Screens'][0]['Items'] } $imgName)
+    $icon['Left'] = 0.0; $icon['Top'] = 4.0; $icon['Width'] = 16.0; $icon['Height'] = 16.0
+    $txt = New-Text "$name Value" 21 0 ($w - 21) $R '' $TextWhite 13.0 0
+    Set-Js $txt 'Text' $textJs
+    $g = New-Group "Weather $name" 0 4 $w $R @($icon, $txt)
+    Set-Js $g 'Left' $leftJs
+    if ($visJs) { Set-Js $g 'Visible' "return $visJs" }
+    $g
+  }
+  $windText = Get-Expr (Find-Item @{ Childrens = (Read-Dash $wx.Wind)['Screens'][0]['Items'] } 'Wind Text') 'Text'
+  $header['Childrens'] = @($header['Childrens']) + @(
+    (New-WeatherItem 'Precip' $wx.Precip 'Rain Cloud' "return ($precipVal * 100).toFixed(0) + '%'" $pctW "return $right - $windW - (($wetVis) ? $pctW : 0) - $pctW" $precipVis),
+    (New-WeatherItem 'Wetness' $wx.Wet 'Rain Drops' "return ($wetVal).toFixed(0) + '%'" $pctW "return $right - $windW - $pctW" $wetVis),
+    (New-WeatherItem 'Wind' $wx.Wind 'Wind Arrow' $windText $windW "return $right - $windW" '')
+  )
+  "Weather added to header"
+} else { "Weather widgets not found next to the source - header without weather" }
+
 # footer: Inc, SOF, Track (former header infos)
 $footer['Height'] = [double]($FooterH - $CellGap)
 Set-Js $footer 'Top' ($maxRowsJs + "return `$prop('variable.headerOffset') + (2 * maxRows + 1) * $R + $CellGap")
