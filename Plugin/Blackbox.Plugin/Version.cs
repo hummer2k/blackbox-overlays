@@ -31,7 +31,7 @@ namespace Blackbox.Plugin
         private const string _downloadPageUrl = ProjectUrl + "/releases/latest";
 
         // Semantic version MAJOR.MINOR.PATCH; must match Versions.json "plugin" and the release tag v<version>
-        public const string CurrentVersion = "1.0.0";
+        public const string CurrentVersion = "1.0.1";
         public const string BetaVersion = "";
         public bool FailedToCheck { get; private set; } = false;
 
