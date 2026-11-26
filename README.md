@@ -1,7 +1,18 @@
 # Blackbox Overlays
 
 SimHub overlays for iRacing that look like iRacing's own (2025 UI) black boxes, with the extra data
-of a SimHub plugin:
+of a SimHub plugin.
+
+![Blackbox Standings, Relative and Spotter](docs/screenshot.png)
+
+## Another overlay? As if there weren't enough already...
+
+Fair question. Blackbox isn't meant to replace iRacing's native overlays - they stay the main thing on
+screen. It only adds the information they don't show (iRating and licence, tyres, pit and stint info, weather,
+side-by-side bars, ...) and draws it in the same look, so the extra boxes blend in with iRacing's own instead
+of looking like a second, different UI bolted on top.
+
+## The overlays
 
 | Overlay | What it shows |
 |---|---|
