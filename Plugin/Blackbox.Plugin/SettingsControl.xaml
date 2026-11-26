@@ -61,7 +61,7 @@
                             <StackPanel>
                                 <Label HorizontalAlignment="Left" VerticalAlignment="Top">
                                     <Label.Content>
-                                        <TextBlock Text="To update, click the link below, pull the latest version and run tools\Install-Blackbox.ps1 as described in the README."
+                                        <TextBlock Text="To update, click the link below, download the zip of the latest release from the 'Releases' page, close SimHub and run Install.cmd."
                                                    Width="780" TextWrapping="Wrap" HorizontalAlignment="Left" VerticalAlignment="Top"/>
                                     </Label.Content>
                                 </Label>

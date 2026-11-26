@@ -1,13 +1,13 @@
 <#
 .SYNOPSIS
-  Fails unless the release tag (v<version>) matches the plugin version and Versions.json.
+  Fails unless the release tag is semver (vMAJOR.MINOR.PATCH) and matches the plugin version and Versions.json.
 .EXAMPLE
-  .\tools\ci\Test-ReleaseVersion.ps1 -Tag v1.1
+  .\tools\ci\Test-ReleaseVersion.ps1 -Tag v1.1.0
 #>
 param([Parameter(Mandatory)] [string]$Tag)
 $ErrorActionPreference = 'Stop'
 $repo = Split-Path (Split-Path $PSScriptRoot)
-if ($Tag -notmatch '^v(\d+(\.\d+){1,3})$') { throw "Tag '$Tag' must look like v1.2 or v1.2.3" }
+if ($Tag -notmatch '^v((0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*))$') { throw "Tag '$Tag' must be a semantic version like v1.2.3" }
 $version = $Matches[1]
 
 $cs = Get-Content (Join-Path $repo 'Plugin\Blackbox.Plugin\Version.cs') -Raw

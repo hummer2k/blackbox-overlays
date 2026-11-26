@@ -81,10 +81,12 @@ dotnet test Plugin\Blackbox.Tests\bin\Release\net48\Blackbox.Tests.dll
 
 To publish a release:
 
-1. Set the new version in `Plugin/Blackbox.Plugin/Version.cs` (`CurrentVersion`, `BetaVersion = ""`) and in
-   `Versions.json` (`plugin`) - the update check in SimHub compares these.
-2. Commit, then tag and push: `git tag v1.1; git push origin main v1.1`.
-3. The workflow checks that the tag matches both files, builds everything and creates the GitHub release with
+1. Pick the next [semantic version](https://semver.org/) `MAJOR.MINOR.PATCH` (bug fix: patch, new option or
+   visual change: minor, breaking change such as renamed properties or settings: major) and set it in
+   `Plugin/Blackbox.Plugin/Version.cs` (`CurrentVersion`, `BetaVersion = ""`) and in `Versions.json` (`plugin`) -
+   the update check in SimHub compares these.
+2. Commit, then tag and push: `git tag -a v1.1.0 -m "Blackbox Overlays 1.1.0"; git push origin main v1.1.0`.
+3. The workflow checks that the tag is semver and matches both files, builds everything and creates the GitHub release with
    the zip and generated release notes.
 
 ## Repository layout

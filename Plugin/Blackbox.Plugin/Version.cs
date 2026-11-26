@@ -28,9 +28,10 @@ namespace Blackbox.Plugin
     {
         public const string ProjectUrl = "https://github.com/hummer2k/blackbox-overlays";
         private const string _versionUrl = "https://raw.githubusercontent.com/hummer2k/blackbox-overlays/main/Versions.json";
-        private const string _downloadPageUrl = ProjectUrl;
+        private const string _downloadPageUrl = ProjectUrl + "/releases/latest";
 
-        public const string CurrentVersion = "1.0";
+        // Semantic version MAJOR.MINOR.PATCH; must match Versions.json "plugin" and the release tag v<version>
+        public const string CurrentVersion = "1.0.0";
         public const string BetaVersion = "";
         public bool FailedToCheck { get; private set; } = false;
 
