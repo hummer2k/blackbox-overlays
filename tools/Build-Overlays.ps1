@@ -50,6 +50,8 @@ try {
                                                        -TargetDir (Join-Path $src 'benofficial2 - iRacing Relative') | Out-Host
   & (Join-Path $style 'Set-IracingStyleStandings.ps1') -SourceDir (Join-Path $src 'benofficial2 - iRacing Multi-Class Standings') `
                                                        -TargetDir (Join-Path $src 'benofficial2 - iRacing Multi-Class Standings') | Out-Host
+  & (Join-Path $style 'Set-IracingStyleSpotter.ps1')   -SourceDir (Join-Path $src 'benofficial2 - iRacing Spotter') `
+                                                       -TargetDir (Join-Path $src 'benofficial2 - iRacing Spotter') | Out-Host
 
   # ---- 3. + 4. rebrand into Overlays\ ----
   if (-not (Test-Path $OutDir)) { New-Item -ItemType Directory $OutDir | Out-Null }

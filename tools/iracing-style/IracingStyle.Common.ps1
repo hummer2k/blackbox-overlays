@@ -260,13 +260,14 @@ function New-GradientFill([string]$prefix, [string]$leftNc, [string]$widthNc, [s
 }
 # The panel lives in a layer whose opacity is the benofficial2 'Background Opacity' setting, so the whole
 # gradient fades uniformly (like iRacing's opacity slider). A faint 1px border sits on top.
-function New-PanelChrome([string]$opacityJs, [string]$widthNc, [string]$heightNc) {
-  $fill = New-GradientFill 'Panel' '0' $widthNc $heightNc '' '' (New-Radius 8 8 8 8) (New-Radius 0 0 8 8)
+function New-PanelChrome([string]$opacityJs, [string]$widthNc, [string]$heightNc, [string]$leftNc = '0', [string]$name = 'Panel') {
+  $fill = New-GradientFill $name $leftNc $widthNc $heightNc '' '' (New-Radius 8 8 8 8) (New-Radius 0 0 8 8)
   $bs = New-Radius 8 8 8 8
   $bs['BorderColor'] = '#09FFFFFF'; $bs['BorderTop'] = 1; $bs['BorderBottom'] = 1; $bs['BorderLeft'] = 1; $bs['BorderRight'] = 1
-  $border = New-Rect 'Panel Border' 0 0 444 300 '#00000000' 100 $bs
+  $border = New-Rect "$name Border" 0 0 444 300 '#00000000' 100 $bs
+  if ($leftNc -ne '0') { Set-Nc $border 'Left' $leftNc }
   Set-Nc $border 'Width' $widthNc; Set-Nc $border 'Height' $heightNc
-  $layer = New-Layer 'Panel' (@($fill) + @($border))
+  $layer = New-Layer $name (@($fill) + @($border))
   Set-Js $layer 'Opacity' $opacityJs
   $layer
 }
