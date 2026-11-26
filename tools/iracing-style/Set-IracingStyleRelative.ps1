@@ -98,7 +98,13 @@ $pos = Get-Child $vis 'Position In Class'
 $pos['Left'] = [double]$PosLeft; $pos['Width'] = [double]$PosW
 Set-Js $pos 'TextColor' "return ($isPlayer) ? '$OnYellow' : getRelativeTextColor($idx);"
 
-$timeline = New-ClassTimeline '[variable.classColor]' "getRelativeProp($idx, 'CarClassColor') == getRelativeProp(0, 'CarClassColor')"
+# marker shape = class rank (fastest first), taken from the standings' class order (sorted by lap time)
+Add-Var $row 'classShape' (@"
+const c = getRelativeProp($idx, 'CarClassColor');
+for (let i = 0; i < 4; i++) { if (`$prop('benofficial2.Standings.Class0' + i + '.Color') == c) return i % 3; }
+return 0;
+"@ -replace "`r`n", "`n")
+$timeline = New-ClassTimeline '[variable.classColor]' '[variable.classShape]'
 Insert-Children $vis 0 (@($timeline | Where-Object { $_['Name'] -like 'Class Glow*' }) + @(New-PosCell $isPlayer) + @($timeline | Where-Object { $_['Name'] -notlike 'Class Glow*' }))
 
 $num = Get-Child $vis 'Number'

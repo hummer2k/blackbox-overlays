@@ -40,7 +40,6 @@ $ci         = "`$prop('variable.ClassIdx')"
 $ri         = "(repeatindex() - 1)"
 $isPlayer   = "isnull(getStandingsProp($ci, $ri, 'IsHighlighted'), false)"
 $classColor = "isnull(getStandingsProp($ci, $ri, 'CarClassColor'), '#FFFFFF')"
-$sameClass  = "$ci == isnull(`$prop('benofficial2.Standings.PlayerCarClassIdx'), 0)"
 
 # JS: vertical offset of class block $limitExpr (sum of all previous visible class blocks)
 function Get-BlockLoopJs([string]$limitExpr) {
@@ -137,7 +136,9 @@ foreach ($n in 'Best Lap Time', 'Last Lap Time', 'Delta Lap Time', 'Gap to Leade
 
 # class colour once per class widget; the ~25 timeline items per row read it via a cheap NCalc binding
 Add-Var $cs 'classColor' "return isnull(getClassColor($ci), '#FFFFFF')"
-$timeline = New-ClassTimeline '[variable.classColor]' $sameClass
+# classes are sorted fastest first, so the class index is iRacing's class rank (marker shape)
+Add-Var $cs 'classShape' "return ($ci) % 3"
+$timeline = New-ClassTimeline '[variable.classColor]' '[variable.classShape]'
 Insert-Children $row 2 (@($timeline | Where-Object { $_['Name'] -like 'Class Glow*' }) + @(New-PosCell $isPlayer) + @($timeline | Where-Object { $_['Name'] -notlike 'Class Glow*' }))
 
 $num = Get-Child $row 'Number'

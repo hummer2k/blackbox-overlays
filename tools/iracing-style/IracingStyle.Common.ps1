@@ -357,11 +357,12 @@ function Set-TimingMonospace($item) {
   $item['Font'] = $TimeFont; $item['FontWeight'] = $TimeWeight; $item['FontSize'] = $TimeSize
   $item['UseMonospacedText'] = $false
 }
-# Class timeline: glow fading right, 2px line, marker (square = $squareJs true, circle otherwise).
+# Class timeline: glow fading right, 2px line, marker. Like iRacing the marker shape follows the class rank
+# (fastest class first): circle, square, diamond (square standing on its corner), then repeating.
 # The glow is 22 stacked 2px-stepped strips at 2% each (smooth, no visible blocks); they overlap neighbouring
-# rows by 0.5px so no seams appear when scaled. $colorNc must be a cheap NCalc expression (e.g. a dashboard
-# variable) because it is evaluated by ~25 items per row.
-function New-ClassTimeline([string]$colorNc, [string]$squareJs) {
+# rows by 0.5px so no seams appear when scaled. $colorNc and $shapeNc (0 circle, 1 square, 2 diamond) must be
+# cheap NCalc expressions (e.g. dashboard variables) because they are evaluated by ~25 items per row.
+function New-ClassTimeline([string]$colorNc, [string]$shapeNc) {
   for ($w = 44; $w -ge 2; $w -= 2) {
     $g = New-Rect "Class Glow $w" ($LineX + 2) -0.25 $w ($R + 0.5) '#FFFFFFFF' 2
     Set-Nc $g 'BackgroundColor' $colorNc
@@ -370,14 +371,16 @@ function New-ClassTimeline([string]$colorNc, [string]$squareJs) {
   $line = New-Rect 'Class Line' $LineX -1 2 ($R + 2) '#FFFFFFFF' 100
   Set-Nc $line 'BackgroundColor' $colorNc
   $line
-  $mk = 10
-  foreach ($m in @(@('Marker Square', 2, $squareJs), @('Marker Circle', 5, "!($squareJs)"))) {
+  # name, size, corner radius, rotation, shape index
+  foreach ($m in @(@('Marker Circle', 10, 5, 0, 0), @('Marker Square', 10, 2, 0, 1), @('Marker Diamond', 8, 1, 45, 2))) {
+    $mk = $m[1]
     $bs = New-Dict
     $bs['BorderColor'] = '#FFFFFFFF'; $bs['BorderTop'] = 2; $bs['BorderBottom'] = 2; $bs['BorderLeft'] = 2; $bs['BorderRight'] = 2
-    $bs['RadiusTopLeft'] = $m[1]; $bs['RadiusTopRight'] = $m[1]; $bs['RadiusBottomLeft'] = $m[1]; $bs['RadiusBottomRight'] = $m[1]
+    $bs['RadiusTopLeft'] = $m[2]; $bs['RadiusTopRight'] = $m[2]; $bs['RadiusBottomLeft'] = $m[2]; $bs['RadiusBottomRight'] = $m[2]
     $bs['Bindings'] = New-Dict; $bs['Bindings']['BorderColor'] = New-NcBinding $colorNc
     $marker = New-Rect $m[0] ($LineX + 1 - $mk / 2) (($R - $mk) / 2) $mk $mk $MarkerFill 100 $bs
-    Set-Js $marker 'Visible' "return $($m[2])"
+    if ($m[3]) { $marker['UseRotation'] = $true; $marker['Rotation'] = [double]$m[3] }
+    Set-Nc $marker 'Visible' "$shapeNc = $($m[4])"
     $marker
   }
 }
