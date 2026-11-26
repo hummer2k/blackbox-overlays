@@ -81,7 +81,12 @@ if ($MigrateFromBenofficial2) {
   New-Item -ItemType Directory $backup | Out-Null
 
   $common = Join-Path $SimHubDir 'PluginsData\Common'
-  foreach ($f in Get-ChildItem $common -Filter 'benofficial2.*.json' -ErrorAction SilentlyContinue) {
+  # only the settings of modules the Blackbox plugin still has
+  $kept = 'GeneralSettings_3.1', 'RelativeSettings', 'StandingsSettings', 'SpotterSettings', 'BlindSpotMonitorSettings',
+          'RejoinHelperSettings', 'HighlightedDriverSettings', 'PitlaneHelperSettings',
+          'PrecipitationSettings', 'TrackWetnessSettings', 'WindSettings'
+  foreach ($f in Get-ChildItem $common -Filter 'benofficial2.*.json' -ErrorAction SilentlyContinue |
+                 Where-Object { $kept -contains $_.BaseName.Substring('benofficial2.'.Length) }) {
     $t = Join-Path $common ("$BlackboxPluginPrefix." + $f.Name.Substring('benofficial2.'.Length))
     if (-not (Test-Path $t)) { Copy-Item $f.FullName $t; "Settings: $($f.Name) -> $(Split-Path $t -Leaf)" }
   }
