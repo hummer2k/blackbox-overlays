@@ -59,7 +59,17 @@ jobs:
           .\tools\Build-Overlays.ps1
           # .ressources are zips with fresh timestamps on every build, compare everything else
           git diff --exit-code --stat -- Overlays ':(exclude)*.ressources'
-          if ($LASTEXITCODE) { Write-Error 'Overlays/ is out of date - run tools\Build-Overlays.ps1 and commit the result'; exit 1 }
+          if ($LASTEXITCODE) {
+            # the .djson files are single-line JSON: show the area around the first difference
+            foreach ($f in git diff --name-only -- Overlays ':(exclude)*.ressources') {
+              $a = (git show "HEAD:$f") -join "`n"; $b = [IO.File]::ReadAllText((Resolve-Path $f))
+              $i = 0; while ($i -lt [Math]::Min($a.Length, $b.Length) -and $a[$i] -eq $b[$i]) { $i++ }
+              "== $f (first difference at $i)"
+              '   committed: ' + $a.Substring([Math]::Max(0, $i - 120), [Math]::Min(240, $a.Length - [Math]::Max(0, $i - 120)))
+              '   rebuilt:   ' + $b.Substring([Math]::Max(0, $i - 120), [Math]::Min(240, $b.Length - [Math]::Max(0, $i - 120)))
+            }
+            Write-Error 'Overlays/ is out of date - run tools\Build-Overlays.ps1 and commit the result'; exit 1
+          }
           git checkout -- Overlays
 
       - name: Check release version
