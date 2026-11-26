@@ -1,0 +1,618 @@
+﻿<!--
+    benofficial2's Official Overlays
+    Copyright (C) 2025-2026 benofficial2
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see<https://www.gnu.org/licenses/> .
+-->
+
+<UserControl x:Class="Blackbox.Plugin.SettingsControl" 
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" 
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" 
+             xmlns:converter="http://metro.mahapps.com/winfx/xaml/iconpacks" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:iconpacks="clr-namespace:MahApps.Metro.IconPacks;assembly=MahApps.Metro.IconPacks.Material" 
+             xmlns:local="clr-namespace:Blackbox.Plugin" 
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:styles="clr-namespace:SimHub.Plugins.Styles;assembly=SimHub.Plugins" 
+             xmlns:ui="clr-namespace:SimHub.Plugins.UI;assembly=SimHub.Plugins" 
+             xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
+             mc:Ignorable="d">
+    <ScrollViewer>
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="44*"/>
+                <ColumnDefinition Width="377*"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel VerticalAlignment="Top" Grid.ColumnSpan="2">
+                <styles:SHSection Title="{Binding Plugin.PluginName}" ShowSeparator="True" VerticalAlignment="Top">
+                    <StackPanel>
+                        <styles:SHSubSection Title="What is this plugin?">
+                            <StackPanel>
+                                <Label HorizontalAlignment="Left" VerticalAlignment="Top">
+                                    <Label.Content>
+                                        <TextBlock Text="This plugin powers the Blackbox Overlays for iRacing (Relative, Multi-Class Standings and Spotter in the style of iRacing's native black boxes). It adds the SimHub data properties the overlays need. Also in this page, you can configure various options to change the look of the overlays."
+                                                   Width="780" TextWrapping="Wrap" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                                    </Label.Content>
+                                </Label>
+
+                                <Label HorizontalAlignment="Left" VerticalAlignment="Top">
+                                    <Label.Content>
+                                        <TextBlock Text="Blackbox is based on benofficial2's Official Overlays (GPL-3.0). All credit for the plugin's data logic goes to benofficial2."
+                                                   Width="780" TextWrapping="Wrap" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                                    </Label.Content>
+                                </Label>
+
+                                <styles:SHLinkButton HorizontalAlignment="Left" Click="UpstreamLink_Click" Content="Visit benofficial2's Official Overlays on GitHub" Margin="5,10,1,1"/>
+                            </StackPanel>
+                        </styles:SHSubSection>
+
+                        <styles:SHSubSection Title="How to get the latest version?">
+                            <StackPanel>
+                                <Label HorizontalAlignment="Left" VerticalAlignment="Top">
+                                    <Label.Content>
+                                        <TextBlock Text="To update, click the link below, pull the latest version and run tools\Install-Blackbox.ps1 as described in the README."
+                                                   Width="780" TextWrapping="Wrap" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                                    </Label.Content>
+                                </Label>
+
+                                <styles:SHLinkButton HorizontalAlignment="Left" Click="GitHubLink_Click" Content="Visit the Blackbox plugin page on GitHub" Margin="5,10,1,1"/>
+                            </StackPanel>
+                        </styles:SHSubSection>
+
+                        <styles:SHSubSection Title="How to get help or give feedback?">
+                            <StackPanel>
+                                <Label HorizontalAlignment="Left" VerticalAlignment="Top">
+                                    <Label.Content>
+                                        <TextBlock Text="To report bugs, please use the GitHub link above and navigate to the 'Issues' tab. Please don't report Blackbox issues to benofficial2."
+                                                   Width="780" TextWrapping="Wrap" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                                    </Label.Content>
+                                </Label>
+                            </StackPanel>
+                        </styles:SHSubSection>
+                    </StackPanel>
+                </styles:SHSection>
+
+                <styles:SHSection Title="GENERAL PLUGIN OPTIONS" ShowSeparator="True">
+                    <StackPanel>
+                        <styles:SHToggleCheckbox 
+                            Name="CheckForUpdates"
+                            ToolTip="Check if a new version of the plugin is available when starting SimHub." 
+                            HorizontalAlignment="Left" Margin="0,0,4,8"
+                            IsChecked="{Binding Plugin.Modules[GeneralModule].Settings.CheckForUpdates, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                            Click="CheckForUpdates_Click">
+                            Check for updates
+                        </styles:SHToggleCheckbox>
+
+                        <styles:SHToggleCheckbox 
+                            ToolTip="Display the clock time in a 24-hour format. Ex: 14:30 instead of 2:30 PM" 
+                            HorizontalAlignment="Left" Margin="0,0,4,8"
+                            IsChecked="{Binding Plugin.Modules[GeneralModule].Settings.ClockFormat24h, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                            24-hour clock format
+                        </styles:SHToggleCheckbox>
+
+                        <Label Content="Background color" Margin="0,0,0,0"/>
+                        <xctk:ColorPicker SelectedColor="{Binding Plugin.Modules[GeneralModule].Settings.BackgroundColor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="113" HorizontalAlignment="Left" ToolTip="Changes the background color of every overlay" />
+                    </StackPanel>
+                </styles:SHSection>
+
+                <styles:SHSection Title="STANDINGS OVERLAY OPTIONS" ShowSeparator="True">
+                    <StackPanel HorizontalAlignment="Left">
+                        <styles:SHToggleCheckbox 
+                            ToolTip="Hide the standings leaderboard when the replay is playing (i.e. when out of the car)" 
+                            HorizontalAlignment="Left" Margin="0,0,4,8"
+                            IsChecked="{Binding Plugin.Modules[StandingsModule].Settings.HideInReplay, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                            Hide in replay
+                        </styles:SHToggleCheckbox>
+
+                        <styles:SHToggleCheckbox 
+                            ToolTip="Show the header with session information" 
+                            HorizontalAlignment="Left" Margin="0,0,4,8"
+                            IsChecked="{Binding Plugin.Modules[StandingsModule].Settings.HeaderVisible, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                            Show header
+                        </styles:SHToggleCheckbox>
+
+                        <StackPanel Orientation="Horizontal">
+                            <ui:TitledSlider Width="400" Title="Header Width (%)" Maximum="100" Minimum="0" Value="{Binding Plugin.Modules[StandingsModule].Settings.HeaderWidth, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            <ui:TitledSlider Width="400" Title="Header Opacity (%)" Maximum="100" Minimum="0" Value="{Binding Plugin.Modules[StandingsModule].Settings.HeaderOpacity, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+
+                        <styles:SHToggleCheckbox 
+                            ToolTip="Show the car class header with class information" 
+                            HorizontalAlignment="Left" Margin="0,0,4,8"
+                            IsChecked="{Binding Plugin.Modules[StandingsModule].Settings.CarClassHeaderVisible, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                            Show car class header
+                        </styles:SHToggleCheckbox>
+
+                        <styles:SHToggleCheckbox 
+                            ToolTip="Highlight the player row with a bright background color" 
+                            HorizontalAlignment="Left" Margin="0,0,4,8"
+                            IsChecked="{Binding Plugin.Modules[StandingsModule].Settings.HighlightPlayerRow, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                            Highlight player row
+                        </styles:SHToggleCheckbox>
+
+                        <styles:SHToggleCheckbox 
+                            ToolTip="Show the country flag corresponding to the driver's flair" 
+                            HorizontalAlignment="Left" Margin="0,0,4,8"
+                            IsChecked="{Binding Plugin.Modules[StandingsModule].Settings.CountryFlagVisible, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                            Show country flag
+                        </styles:SHToggleCheckbox>
+
+                        <StackPanel Orientation="Horizontal">
+                            <styles:SHToggleCheckbox 
+                                ToolTip="Show the driver's safety rating" 
+                                HorizontalAlignment="Left" Margin="0,0,4,8"
+                                IsChecked="{Binding Plugin.Modules[StandingsModule].Settings.SafetyRatingVisible, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                Show safety rating
+                            </styles:SHToggleCheckbox>
+
+                            <styles:SHToggleCheckbox 
+                                ToolTip="Show the driver's iRating" 
+                                HorizontalAlignment="Left" Margin="4,0,4,8"
+                                IsChecked="{Binding Plugin.Modules[StandingsModule].Settings.IRatingVisible, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                Show iRating
+                            </styles:SHToggleCheckbox>
+
+                            <styles:SHToggleCheckbox 
+                                ToolTip="Show the driver's iRating gain/loss if they were to finish the race in their current position" 
+                                HorizontalAlignment="Left" Margin="4,0,4,8"
+                                IsChecked="{Binding Plugin.Modules[StandingsModule].Settings.IRatingChangeVisible, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                Show iRating gain/loss in race
+                            </styles:SHToggleCheckbox>
+                        </StackPanel>
+
+                        <styles:SHToggleCheckbox 
+                            ToolTip="Show the number of positions gained or lost in a race" 
+                            HorizontalAlignment="Left" Margin="0,0,4,8"
+                            IsChecked="{Binding Plugin.Modules[StandingsModule].Settings.PositionChangeVisible, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                            Show position gain/loss in race
+                        </styles:SHToggleCheckbox>
+
+                        <styles:SHToggleCheckbox 
+                            ToolTip="Show the lap number of the current stint instead of the lap number when the driver pitted" 
+                            HorizontalAlignment="Left" Margin="0,0,4,8"
+                            IsChecked="{Binding Plugin.Modules[StandingsModule].Settings.ShowStintLapInRace, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                            Use Stint Lap instead of Pit Lap in race
+                        </styles:SHToggleCheckbox>
+                        
+                        <StackPanel Orientation="Horizontal">
+                            <styles:SHToggleCheckbox 
+                                ToolTip="The delta column will be relative to the player's time rather than the class leader's time" 
+                                HorizontalAlignment="Left" Margin="0,0,4,8"
+                                IsChecked="{Binding Plugin.Modules[StandingsModule].Settings.UseDeltaToPlayer, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                Use delta to player instead of delta to leader
+                            </styles:SHToggleCheckbox>
+
+                            <styles:SHToggleCheckbox 
+                                ToolTip="When inverted, a green delta means the player is faster" 
+                                HorizontalAlignment="Left" Margin="8,0,4,8"
+                                IsChecked="{Binding Plugin.Modules[StandingsModule].Settings.InvertDeltaToPlayer, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                Invert delta to player
+                            </styles:SHToggleCheckbox>
+                        </StackPanel>
+
+                        <styles:SHToggleCheckbox 
+                            ToolTip="The Pit Time column will be time spent in the pit box only" 
+                            HorizontalAlignment="Left" Margin="0,0,4,8"
+                            IsChecked="{Binding Plugin.Modules[StandingsModule].Settings.UsePitStopDuration, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                            Use time in pit box instead of total time in pit lane
+                        </styles:SHToggleCheckbox>
+
+                        <Label Content="Columns to show (Race):" Margin="0,4,4,0" Width="180" HorizontalAlignment="Left"/>
+                        
+                        <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                            <styles:SHToggleCheckbox 
+                                ToolTip="Car brand logo when available" 
+                                HorizontalAlignment="Left" Margin="0,0,4,8"
+                                IsChecked="{Binding Plugin.Modules[StandingsModule].Settings.CarLogoVisibleInRace, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                Car Logo
+                            </styles:SHToggleCheckbox>
+
+                            <styles:SHToggleCheckbox 
+                                ToolTip="Driver's gap to the race leader in seconds or laps" 
+                                HorizontalAlignment="Left" Margin="0,0,4,8"
+                                IsChecked="{Binding Plugin.Modules[StandingsModule].Settings.GapVisibleInRace, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                Gap
+                            </styles:SHToggleCheckbox>
+
+                            <styles:SHToggleCheckbox 
+                                ToolTip="Driver's gap to their opponent ahead in seconds or laps" 
+                                HorizontalAlignment="Left" Margin="0,0,4,8"
+                                IsChecked="{Binding Plugin.Modules[StandingsModule].Settings.IntervalVisibleInRace, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                Interval
+                            </styles:SHToggleCheckbox>
+
+                            <styles:SHToggleCheckbox 
+                                ToolTip="Driver's best lap time in the session" 
+                                HorizontalAlignment="Left" Margin="0,0,4,8"
+                                IsChecked="{Binding Plugin.Modules[StandingsModule].Settings.BestVisibleInRace, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                Best Lap Time
+                            </styles:SHToggleCheckbox>
+
+                            <styles:SHToggleCheckbox 
+                                ToolTip="Driver's last lap time" 
+                                HorizontalAlignment="Left" Margin="0,0,4,8"
+                                IsChecked="{Binding Plugin.Modules[StandingsModule].Settings.LastVisibleInRace, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                Last Lap Time
+                            </styles:SHToggleCheckbox>
+
+                            <styles:SHToggleCheckbox 
+                                ToolTip="Driver's delta lap time to leader's last lap time" 
+                                HorizontalAlignment="Left" Margin="0,0,4,8"
+                                IsChecked="{Binding Plugin.Modules[StandingsModule].Settings.DeltaVisibleInRace, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                Delta
+                            </styles:SHToggleCheckbox>
+
+                            <styles:SHToggleCheckbox 
+                                ToolTip="Time spent in the pit" 
+                                HorizontalAlignment="Left" Margin="0,0,4,8"
+                                IsChecked="{Binding Plugin.Modules[StandingsModule].Settings.PitDurationVisibleInRace, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                Pit Time
+                            </styles:SHToggleCheckbox>
+                        </StackPanel>
+
+                        <Label Content="Columns to show (Practice and Quali):" Margin="0,4,4,8" Width="250" HorizontalAlignment="Left"/>
+                        <StackPanel Orientation="Horizontal">
+                            <styles:SHToggleCheckbox 
+                                ToolTip="Car brand logo when available" 
+                                HorizontalAlignment="Left" Margin="0,0,4,8"
+                                IsChecked="{Binding Plugin.Modules[StandingsModule].Settings.CarLogoVisible, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                Car Logo
+                            </styles:SHToggleCheckbox>
+
+                            <styles:SHToggleCheckbox 
+                                IsEnabled="False"
+                                ToolTip="Driver's gap to the race leader in seconds or laps" 
+                                HorizontalAlignment="Left" Margin="0,0,4,8"
+                                IsChecked="False">
+                                Gap
+                            </styles:SHToggleCheckbox>
+
+                            <styles:SHToggleCheckbox 
+                                IsEnabled="False"
+                                ToolTip="Driver's gap to their opponent ahead in seconds or laps" 
+                                HorizontalAlignment="Left" Margin="0,0,4,8"
+                                IsChecked="False">
+                                Interval
+                            </styles:SHToggleCheckbox>
+
+                            <styles:SHToggleCheckbox 
+                                IsEnabled="False"
+                                ToolTip="Driver's best lap time in the session" 
+                                HorizontalAlignment="Left" Margin="0,0,4,8"
+                                IsChecked="{Binding Plugin.Modules[StandingsModule].Settings.BestVisible, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                Best Lap Time
+                            </styles:SHToggleCheckbox>
+
+                            <styles:SHToggleCheckbox 
+                                ToolTip="Driver's last lap time" 
+                                HorizontalAlignment="Left" Margin="0,0,4,8"
+                                IsChecked="{Binding Plugin.Modules[StandingsModule].Settings.LastVisible, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                Last Lap Time
+                            </styles:SHToggleCheckbox>
+
+                            <styles:SHToggleCheckbox 
+                                ToolTip="Driver's delta lap time to the session best lap time" 
+                                HorizontalAlignment="Left" Margin="0,0,4,8"
+                                IsChecked="{Binding Plugin.Modules[StandingsModule].Settings.DeltaVisible, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                Delta
+                            </styles:SHToggleCheckbox>
+
+                            <styles:SHToggleCheckbox 
+                                ToolTip="Time spent in the pit" 
+                                HorizontalAlignment="Left" Margin="0,0,4,8"
+                                IsChecked="{Binding Plugin.Modules[StandingsModule].Settings.PitDurationVisible, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                Pit Time
+                            </styles:SHToggleCheckbox>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                            <ui:TitledSlider MinWidth="400" Title="Max Row Count (Player Class)" Maximum="25" Minimum="1" Value="{Binding Plugin.Modules[StandingsModule].Settings.MaxRowsPlayerClass, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                ToolTip="Maximum number of visible rows in the Standings leaderboard for the player's class"/>
+
+                            <ui:TitledSlider MinWidth="400" Title="Max Row Count (Other Classes)" Maximum="5" Minimum="0" Value="{Binding Plugin.Modules[StandingsModule].Settings.MaxRowsOtherClasses, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                ToolTip="Maximum number of visible rows in the Standings leaderboard for other classes"/>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal">
+                            <ui:TitledSlider MinWidth="400" Title="Lead Focused Rows (Player Class)" Maximum="10" Minimum="0" Value="{Binding Plugin.Modules[StandingsModule].Settings.LeadFocusedRows, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                ToolTip="Number of leader rows to always show when there are too many rows, 0 to disable"/>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal">
+                            <ui:TitledSlider Width="400" Title="Width (Race)" Maximum="690" Minimum="250" Value="{Binding Plugin.Modules[StandingsModule].Settings.WidthPixelsInRace, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                ToolTip="Minimum width of the overlay in pixels. Actual width might be larger if selected data fields don't fit."/>
+
+                            <ui:TitledSlider Width="400" Title="Width (Practice and Quali)" Maximum="690" Minimum="250" Value="{Binding Plugin.Modules[StandingsModule].Settings.WidthPixels, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                ToolTip="Minimum width of the overlay in pixels. Actual width might be larger if selected data fields don't fit."/>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal">
+                            <ui:TitledSlider Width="400" Title="Background Opacity (%)" Maximum="100" Minimum="0" Value="{Binding Plugin.Modules[StandingsModule].Settings.BackgroundOpacity, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            <ui:TitledSlider MinWidth="400" Title="Alternate row background color (%)" Maximum="100" Minimum="0" Value="{Binding Plugin.Modules[StandingsModule].Settings.AlternateRowBackgroundColor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                ToolTip="Use a different background color to make alternate rows easier to read. 100% for maximum contrast, 0% to disable."/>
+                        </StackPanel>
+                    </StackPanel>
+                </styles:SHSection>
+
+                <styles:SHSection Title="RELATIVE OVERLAY OPTIONS" ShowSeparator="True">
+                    <StackPanel HorizontalAlignment="Left">
+                        <styles:SHToggleCheckbox 
+                            ToolTip="Hide the relative when the replay is playing (i.e. when out of the car)" 
+                            HorizontalAlignment="Left" Margin="0,0,4,8"
+                            IsChecked="{Binding Plugin.Modules[RelativeModule].Settings.HideInReplay, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                            Hide in replay
+                        </styles:SHToggleCheckbox>
+
+                        <StackPanel Orientation="Horizontal">
+                            <styles:SHToggleCheckbox 
+                                ToolTip="Show the header with session information" 
+                                HorizontalAlignment="Left" Margin="0,0,4,8"
+                                IsChecked="{Binding Plugin.Modules[RelativeModule].Settings.HeaderVisible, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                Show header
+                            </styles:SHToggleCheckbox>
+
+                            <styles:SHToggleCheckbox 
+                                ToolTip="Show the footer with additional session information" 
+                                HorizontalAlignment="Left" Margin="8,0,4,8"
+                                IsChecked="{Binding Plugin.Modules[RelativeModule].Settings.FooterVisible, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                Show footer
+                            </styles:SHToggleCheckbox>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal">
+                            <ui:TitledSlider Width="400" Title="Header Opacity (%)" Maximum="100" Minimum="0" Value="{Binding Plugin.Modules[RelativeModule].Settings.HeaderOpacity, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+
+                        <Label Content="Header Clock" Margin="0,0,0,0"/>
+                        <ComboBox Width="200" HorizontalAlignment="Left" Margin="0,0,4,10"
+                            SelectedValue="{Binding Plugin.Modules[RelativeModule].Settings.ClockType, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                            SelectedValuePath="Tag"
+                            ToolTip="Select whether to display computer time or in-sim track time">
+                            <ComboBoxItem Content="Computer Time" Tag="{x:Static local:RelativeClockType.ComputerTime}"/>
+                            <ComboBoxItem Content="Track Time (In-Sim)" Tag="{x:Static local:RelativeClockType.TrackTime}"/>
+                        </ComboBox>
+                        
+                        <StackPanel Orientation="Horizontal">
+                            <ui:TitledSlider HorizontalAlignment="Left" Width="400" Title="Width" Maximum="500" Minimum="200" Value="{Binding Plugin.Modules[RelativeModule].Settings.WidthPixels, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                ToolTip="Minimum width of the overlay in pixels. Actual width might be larger if selected data fields don't fit."/>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal">
+                            <ui:TitledSlider HorizontalAlignment="Left" Width="400" Title="Max Row Count (Ahead and Behind)" Maximum="5" Minimum="1" Value="{Binding Plugin.Modules[RelativeModule].Settings.MaxRows, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                ToolTip="Maximum number of visible rows ahead and behind the player"/>
+                        </StackPanel>
+
+                        <styles:SHToggleCheckbox 
+                            ToolTip="Turn on to include cars on pit lane in the relative." 
+                            HorizontalAlignment="Left" Margin="0,0,4,8"
+                            IsChecked="{Binding Plugin.Modules[RelativeModule].Settings.IncludeCarsOnPitLane, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                            Include cars on pit lane
+                        </styles:SHToggleCheckbox>
+
+                        <styles:SHToggleCheckbox 
+                            Visibility="{Binding DebugVisibility, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                            ToolTip="Use slightly more CPU resources to compute more precise gaps." 
+                            HorizontalAlignment="Left" Margin="0,0,4,8"
+                            IsChecked="{Binding Plugin.Modules[RelativeModule].Settings.UseHighPrecisionGaps, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                            Use high-precision gaps
+                        </styles:SHToggleCheckbox>
+
+                        <styles:SHToggleCheckbox 
+                            ToolTip="Show the country flag corresponding to the driver's flair" 
+                            HorizontalAlignment="Left" Margin="0,0,4,8"
+                            IsChecked="{Binding Plugin.Modules[RelativeModule].Settings.CountryFlagVisible, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                            Show country flag
+                        </styles:SHToggleCheckbox>
+
+                        <StackPanel Orientation="Horizontal">
+                            <styles:SHToggleCheckbox 
+                                ToolTip="Show the driver's safety rating" 
+                                HorizontalAlignment="Left" Margin="0,0,4,8"
+                                IsChecked="{Binding Plugin.Modules[RelativeModule].Settings.SafetyRatingVisible, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                Show safety rating
+                            </styles:SHToggleCheckbox>
+
+                            <styles:SHToggleCheckbox 
+                                ToolTip="Show the driver's iRating" 
+                                HorizontalAlignment="Left" Margin="4,0,4,8"
+                                IsChecked="{Binding Plugin.Modules[RelativeModule].Settings.IRatingVisible, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                Show iRating
+                            </styles:SHToggleCheckbox>
+
+                            <styles:SHToggleCheckbox 
+                                ToolTip="Show the driver's iRating gain/loss if they were to finish the race in their current position" 
+                                HorizontalAlignment="Left" Margin="4,0,4,8"
+                                IsChecked="{Binding Plugin.Modules[RelativeModule].Settings.IRatingChangeVisible, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                Show iRating gain/loss in race
+                            </styles:SHToggleCheckbox>
+                        </StackPanel>
+
+                        <styles:SHToggleCheckbox 
+                            ToolTip="Show the car brand logo column when available" 
+                            HorizontalAlignment="Left" Margin="0,0,4,8"
+                            IsChecked="{Binding Plugin.Modules[RelativeModule].Settings.CarLogoVisible, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                            Show car logo
+                        </styles:SHToggleCheckbox>
+
+                        <styles:SHToggleCheckbox 
+                            ToolTip="Show the driver's last lap time" 
+                            HorizontalAlignment="Left" Margin="0,0,4,8"
+                            IsChecked="{Binding Plugin.Modules[RelativeModule].Settings.LastLapTimeVisible, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                            Show Last Lap Time
+                        </styles:SHToggleCheckbox>
+
+                        <styles:SHToggleCheckbox 
+                            ToolTip="Show the driver's current tire compound" 
+                            HorizontalAlignment="Left" Margin="0,0,4,8"
+                            IsChecked="{Binding Plugin.Modules[RelativeModule].Settings.TireCompoundVisible, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                            Show Tire Compound
+                        </styles:SHToggleCheckbox>
+
+                        <StackPanel Orientation="Horizontal">
+                            <styles:SHToggleCheckbox 
+                                ToolTip="Show the driver's current stint lap number" 
+                                HorizontalAlignment="Left" Margin="0,0,4,8"
+                                IsChecked="{Binding Plugin.Modules[RelativeModule].Settings.StintLapVisible, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                Show Stint Lap
+                            </styles:SHToggleCheckbox>
+
+                            <styles:SHToggleCheckbox 
+                                ToolTip="Show the lap number of the current stint instead of the lap number when the driver pitted" 
+                                HorizontalAlignment="Left" Margin="4,0,4,8"
+                                IsChecked="{Binding Plugin.Modules[RelativeModule].Settings.ShowStintLapInRace, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                Use Stint Lap instead of Pit Lap in race
+                            </styles:SHToggleCheckbox>
+                        </StackPanel>
+
+                        <styles:SHToggleCheckbox 
+                            ToolTip="Highlight the player row with a bright background color" 
+                            HorizontalAlignment="Left" Margin="0,0,4,8"
+                            IsChecked="{Binding Plugin.Modules[RelativeModule].Settings.HighlightPlayerRow, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                            Highlight player row
+                        </styles:SHToggleCheckbox>
+
+                        <StackPanel Orientation="Horizontal">
+                            <ui:TitledSlider MinWidth="400" Width="400" Title="Alternate row background color (%)" Maximum="100" Minimum="0" Value="{Binding Plugin.Modules[RelativeModule].Settings.AlternateRowBackgroundColor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                ToolTip="Use a different background color to make alternate rows easier to read. 100% for maximum contrast, 0% to disable."/>
+                            <ui:TitledSlider Width="400" Title="Background Opacity (%)" Maximum="100" Minimum="0" Value="{Binding Plugin.Modules[RelativeModule].Settings.BackgroundOpacity, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+                    </StackPanel>
+                </styles:SHSection>
+
+                <styles:SHSection Title="SPOTTER OVERLAY OPTIONS" ShowSeparator="True">
+                    <StackPanel HorizontalAlignment="Left">
+                        <styles:SHToggleCheckbox 
+                            ToolTip="Enable the Spotter overlay that shows orange bars when the iRacing spotter is calling a car left/right." 
+                            HorizontalAlignment="Left" Margin="0,0,4,8"
+                            IsChecked="{Binding Plugin.Modules[SpotterModule].Settings.Enabled, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                            Enable Spotter
+                        </styles:SHToggleCheckbox>
+
+                        <Label Content="Spotter Threshold" Margin="0,0,0,0"/>
+
+                        <TextBox Text="{Binding Plugin.Modules[SpotterModule].Settings.DistanceThreshold.ValueString, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="113" HorizontalAlignment="Left"
+                                 ToolTip="Distance from another car at which the Spotter's orange bars will show. Also used for showing Blind Spot Monitor.">
+                            <!-- Style to highlight invalid input -->
+                            <TextBox.Style>
+                                <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Plugin.Modules[SpotterModule].Settings.DistanceThreshold.Valid}" Value="False">
+                                            <Setter Property="Background" Value="LightCoral"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBox.Style>
+                        </TextBox>
+
+                        <StackPanel Orientation="Horizontal">
+                            <ui:TitledSlider Width="400" Title="Spotter Bar Height" Maximum="129" Minimum="50" Value="{Binding Plugin.Modules[SpotterModule].Settings.Height, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0,10,0,0" 
+                                             ToolTip="Height of the Spotter's orange bars"/>
+
+                            <ui:TitledSlider Width="400" Title="Spotter Bar Min Height" Maximum="25" Minimum="0" Value="{Binding Plugin.Modules[SpotterModule].Settings.MinHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0,10,0,0" 
+                                             ToolTip="Minimum height of the spotter's orange bar so it's easier to notice (0 to disable)"/>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal">
+                            <ui:TitledSlider Width="400" Title="Spotter Bar Width" Maximum="30" Minimum="10" Value="{Binding Plugin.Modules[SpotterModule].Settings.Width, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0,10,0,0" 
+                                             ToolTip="Width of the Spotter's orange bars"/>
+
+                            <ui:TitledSlider Width="400" Title="Spotter Bar Border" Maximum="3" Minimum="0" Value="{Binding Plugin.Modules[SpotterModule].Settings.Border, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0,10,0,0" 
+                                             ToolTip="Thickness of the Spotter's border"/>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal">
+                            <ui:TitledSlider Width="400" Title="Spotter Bar Spacing (%)" Maximum="100" Minimum="0" Value="{Binding Plugin.Modules[SpotterModule].Settings.Spacing, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0,10,0,0" 
+                                ToolTip="Distance between the Spotter's orange bars"/>
+                        </StackPanel>
+
+                        <styles:SHToggleCheckbox 
+                            ToolTip="Enable the Rejoin Helper that shows the gap with the next incomming car." 
+                            HorizontalAlignment="Left" Margin="0,10,4,8"
+                            IsChecked="{Binding Plugin.Modules[RejoinHelperModule].Settings.Enabled, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                            Enable Rejoin Helper
+                        </styles:SHToggleCheckbox>
+
+                        <Label Content="Rejoin Helper Min 'Clear' Gap (seconds)" Margin="0,10,0,0"/>
+
+                        <TextBox Text="{Binding Plugin.Modules[RejoinHelperModule].Settings.MinimumClearGap.ValueString, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="113" HorizontalAlignment="Left"
+                                 ToolTip="Minimum gap in seconds at which the Rejoin Helper will show the 'Clear'.">
+                            <!-- Style to highlight invalid input -->
+                            <TextBox.Style>
+                                <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Plugin.Modules[RejoinHelperModule].Settings.MinimumClearGap.Valid}" Value="False">
+                                            <Setter Property="Background" Value="LightCoral"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBox.Style>
+                        </TextBox>
+
+                        <Label Content="Rejoin Helper Min 'Care' Gap (seconds)" Margin="0,10,0,0"/>
+
+                        <TextBox Text="{Binding Plugin.Modules[RejoinHelperModule].Settings.MinimumCareGap.ValueString, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="113" HorizontalAlignment="Left"
+                                 ToolTip="Minimum gap in seconds at which the Rejoin Helper will show the 'Care'.">
+                            <!-- Style to highlight invalid input -->
+                            <TextBox.Style>
+                                <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Plugin.Modules[RejoinHelperModule].Settings.MinimumCareGap.Valid}" Value="False">
+                                            <Setter Property="Background" Value="LightCoral"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBox.Style>
+                        </TextBox>
+
+                        <StackPanel Orientation="Horizontal">
+                            <ui:TitledSlider Width="400" Title="Rejoin Helper Min Speed (Km/h)" Maximum="60" Minimum="0" Value="{Binding Plugin.Modules[RejoinHelperModule].Settings.MinSpeed, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0,10,0,0" 
+                                             ToolTip="Speed in Km/h below which the Rejoin Helper will trigger."/>
+                        </StackPanel>
+
+                        <styles:SHToggleCheckbox 
+                            ToolTip="Enable the Blind Spot Monitor that shows a yellow warning sign when cars overlap (iRacing does not specify left/right)." 
+                            HorizontalAlignment="Left" Margin="0,10,4,8"
+                            IsChecked="{Binding Plugin.Modules[BlindSpotMonitorModule].Settings.Enabled, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                            Enable Blind Spot Monitor
+                        </styles:SHToggleCheckbox>
+                    </StackPanel>
+                </styles:SHSection>
+
+                <styles:SHSection Title="RELATIVE HEADER: WEATHER" ShowSeparator="True">
+                    <StackPanel HorizontalAlignment="Left">
+                        <styles:SHToggleCheckbox 
+                            ToolTip="Rotate the wind direction arrow relative to the car rotation" 
+                            HorizontalAlignment="Left" Margin="0,0,4,8"
+                            IsChecked="{Binding Plugin.Modules[WindModule].Settings.RotateWithCar, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                            Rotate wind arrow with car
+                        </styles:SHToggleCheckbox>
+
+                        <styles:SHToggleCheckbox 
+                            ToolTip="Hide the precipitation value when rain precipitation is 0%" 
+                            HorizontalAlignment="Left" Margin="0,0,4,8"
+                            IsChecked="{Binding Plugin.Modules[PrecipitationModule].Settings.HideWhenZero, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                            Hide precipitation when 0%
+                        </styles:SHToggleCheckbox>
+
+                        <styles:SHToggleCheckbox 
+                            ToolTip="Hide the track wetness value when track wetness is 0%" 
+                            HorizontalAlignment="Left" Margin="0,0,4,8"
+                            IsChecked="{Binding Plugin.Modules[TrackWetnessModule].Settings.HideWhenZero, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                            Hide track wetness when 0%
+                        </styles:SHToggleCheckbox>
+                    </StackPanel>
+                </styles:SHSection>            </StackPanel>
+        </Grid>
+    </ScrollViewer>
+</UserControl>

@@ -1,0 +1,174 @@
+﻿/*
+    benofficial2's Official Overlays
+    Copyright (C) 2025-2026 benofficial2
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
+using GameReaderCommon;
+using SimHub.Plugins;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Globalization;
+
+namespace Blackbox.Plugin
+{
+    public class PitlaneHelperSettings : ModuleSettings
+    {
+        public bool DistanceVisible { get; set; } = true;
+        public bool DialsVisible { get; set; } = true;
+        public bool SpeedVisible { get; set; } = true;
+        public int BackgroundOpacity { get; set; } = 60;
+    }
+
+    public class PitlaneHelperModule : PluginModuleBase
+    {
+        private DriverModule _driverModule = null;
+        private TrackModule _trackModule = null;
+
+        private DateTime _lastUpdateTime = DateTime.MinValue;
+        private TimeSpan _updateInterval = TimeSpan.FromMilliseconds(100);
+
+        public PitlaneHelperSettings Settings { get; set; }
+
+        public float ApproachingPitsFromTrackPct { get; set; } = -1.0f;
+
+        public string Target { get; set; } = string.Empty;
+
+        public float DistanceToTarget { get; set; } = 0.0f;
+
+        public float MaxDistanceToTarget { get; set; } = 0.0f;
+
+        public override void Init(PluginManager pluginManager, Blackbox plugin)
+        {
+            _driverModule = plugin.GetModule<DriverModule>();
+            _trackModule = plugin.GetModule<TrackModule>();
+
+            Settings = plugin.ReadCommonSettings<PitlaneHelperSettings>("PitlaneHelperSettings", () => new PitlaneHelperSettings());
+            plugin.AttachDelegate(name: "PitlaneHelper.DistanceVisible", valueProvider: () => Settings.DistanceVisible);
+            plugin.AttachDelegate(name: "PitlaneHelper.DialsVisible", valueProvider: () => Settings.DialsVisible);
+            plugin.AttachDelegate(name: "PitlaneHelper.SpeedVisible", valueProvider: () => Settings.SpeedVisible);
+            plugin.AttachDelegate(name: "PitlaneHelper.BackgroundOpacity", valueProvider: () => Settings.BackgroundOpacity);
+            plugin.AttachDelegate(name: "PitlaneHelper.Target", valueProvider: () => Target);
+            plugin.AttachDelegate(name: "PitlaneHelper.DistanceToTarget", valueProvider: () => DistanceToTarget);
+            plugin.AttachDelegate(name: "PitlaneHelper.MaxDistanceToTarget", valueProvider: () => MaxDistanceToTarget);
+        }
+
+        public override void DataUpdate(PluginManager pluginManager, Blackbox plugin, ref GameData data)
+        {
+            if (data.FrameTime - _lastUpdateTime < _updateInterval)
+                return;
+
+            _lastUpdateTime = data.FrameTime;
+
+            UpdateDistanceToTarget(ref data);
+        }
+
+        public override void End(PluginManager pluginManager, Blackbox plugin)
+        {
+            plugin.SaveCommonSettings("PitlaneHelperSettings", Settings);
+        }
+
+        private void UpdateDistanceToTarget(ref GameData data)
+        {
+            RawDataHelper.TryGetTelemetryData<float>(ref data, out float lapDistPct, "LapDistPct");
+            RawDataHelper.TryGetSessionData<float>(ref data, out float driverPitTrkPct, "DriverInfo", "DriverPitTrkPct");
+
+            if (_driverModule.PlayerDriver.AproachingPits)
+            {
+                Target = "PitEntry";
+
+                if (_trackModule.PitlaneEntryTrackPct >= 0.0f && ApproachingPitsFromTrackPct >= 0.0f)
+                {
+                    DistanceToTarget = Math.Abs(GetTrackDistanceToTarget(lapDistPct, _trackModule.PitlaneEntryTrackPct)) * (float)_trackModule.TrackLength;
+                    MaxDistanceToTarget = Math.Abs(GetTrackDistanceToTarget(ApproachingPitsFromTrackPct, _trackModule.PitlaneEntryTrackPct)) * (float)_trackModule.TrackLength;
+                }
+                else
+                {
+                    DistanceToTarget = 0.0f;
+                    MaxDistanceToTarget = 0.0f;
+                }
+
+                return;
+            }
+
+            if (_driverModule.PlayerDriver.InPit)
+            {
+                float distanceToPitBoxTrackPct = driverPitTrkPct >= 0.0f ? GetTrackDistanceToTarget(lapDistPct, driverPitTrkPct) : -1.0f;
+                float distanceToPitExitTrackPct = _trackModule.PitlaneExitTrackPct >= 0.0f ? GetTrackDistanceToTarget(lapDistPct, _trackModule.PitlaneExitTrackPct) : -1.0f;
+
+                if (distanceToPitBoxTrackPct >= 0.0f && (distanceToPitExitTrackPct < 0.0f || distanceToPitBoxTrackPct < distanceToPitExitTrackPct))
+                {
+                    Target = "PitBox";
+
+                    if (_trackModule.PitlaneEntryTrackPct >= 0.0f)
+                    {
+                        DistanceToTarget = Math.Min(1.0f, Math.Max(0.0f, Math.Abs(distanceToPitBoxTrackPct) * (float)_trackModule.TrackLength));
+
+                        float maxDistanceToPitBoxTrackPct = GetTrackDistanceToTarget(_trackModule.PitlaneEntryTrackPct, driverPitTrkPct);
+                        MaxDistanceToTarget = Math.Min(1.0f, Math.Max(0.0f, Math.Abs(maxDistanceToPitBoxTrackPct) * (float)_trackModule.TrackLength));
+                    }
+                    else
+                    {
+                        DistanceToTarget = 0.0f;
+                        MaxDistanceToTarget = 0.0f;
+                    }                    
+                }
+                else
+                {
+                    Target = "PitExit";
+
+                    if (distanceToPitExitTrackPct >= 0.0f)
+                    {
+                        DistanceToTarget = Math.Min(1.0f, Math.Max(0.0f, Math.Abs(distanceToPitExitTrackPct) * (float)_trackModule.TrackLength));
+
+                        if (driverPitTrkPct >= 0.0f)
+                        {
+                            float maxDistanceToPitExitTrackPct = GetTrackDistanceToTarget(driverPitTrkPct, _trackModule.PitlaneExitTrackPct);
+                            MaxDistanceToTarget = Math.Min(1.0f, Math.Max(0.0f, Math.Abs(maxDistanceToPitExitTrackPct) * (float)_trackModule.TrackLength));
+                        }
+                        else if (_trackModule.PitlaneEntryTrackPct >= 0.0f)
+                        {
+                            float maxDistanceToPitExitTrackPct = GetTrackDistanceToTarget(_trackModule.PitlaneEntryTrackPct, _trackModule.PitlaneExitTrackPct);
+                            MaxDistanceToTarget = Math.Min(1.0f, Math.Max(0.0f, Math.Abs(maxDistanceToPitExitTrackPct) * (float)_trackModule.TrackLength));
+                        }
+                        else
+                        {
+                            MaxDistanceToTarget = 0.0f;
+                        }
+                    }
+                    else
+                    {
+                        DistanceToTarget = 0.0f;
+                        MaxDistanceToTarget = 0.0f;
+                    }
+                }
+
+                return;
+            }
+
+            Target = string.Empty;
+        }
+
+        public static float GetTrackDistanceToTarget(float trackPct, float targetTrackPct)
+        {
+            float distance = targetTrackPct - trackPct;
+            if (distance < 0)
+                distance += 1.0f;
+
+            return distance;
+        }
+    }
+}
