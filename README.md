@@ -8,8 +8,8 @@ of a SimHub plugin.
 ## Another overlay? As if there weren't enough already...
 
 Fair question. Blackbox isn't meant to replace iRacing's native overlays - they stay the main thing on
-screen. It only adds the information they don't show (iRating and licence, tyres, pit and stint info, weather,
-side-by-side bars, ...) and draws it in the same look, so the extra boxes blend in with iRacing's own instead
+screen. It only adds the information they don't show (pit and stint info, weather,
+side-by-side bars, flags, last lap, ...) and draws it in the same look, so the extra boxes blend in with iRacing's own instead
 of looking like a second, different UI bolted on top.
 
 ## The overlays
