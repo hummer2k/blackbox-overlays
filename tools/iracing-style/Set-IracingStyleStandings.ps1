@@ -37,6 +37,7 @@ $ColSteps = [ordered]@{ 'Country Flag' = 1; 'Driver Name' = 2; 'OutLap' = 2; 'Jo
                         'Tire Compound' = 9; 'Pit Status' = 10; 'Pit Time' = 11 }
 $HdrSteps = [ordered]@{ 'Gap' = 4; 'Interval' = 5; 'Best' = 6; 'Last' = 7; 'Delta' = 8; 'Pit' = 10; 'Pit Time' = 11 }
 $ColExtra = 11 * $ColGap
+$PcExtra  = 6            # position change column 25 -> 31 so two digits fit in the pill
 $Widen    = $Shift + 2 * $TimeExtra + $RatingExtra + $ColExtra   # total extra row width (incl. larger rating badge)
 $NewW     = $OrigW + $Widen
 $ClassGap = 4            # space above each class block
@@ -160,8 +161,42 @@ $timeline = New-ClassTimeline '[variable.classColor]' '[variable.classShape]'
 Insert-Children $row 2 (@($timeline | Where-Object { $_['Name'] -like 'Class Glow*' }) + @(New-PosCell $isPlayer) + @($timeline | Where-Object { $_['Name'] -notlike 'Class Glow*' }))
 
 $num = Get-Child $row 'Number'
-$hash = Set-NumberStyle $num "getStandingsProp($ci, $ri, 'Number')" $isPlayer '[variable.classColor]' "(49 + $Shift + `('variable.PositionChangeOffset')) + 34 - 2"
+$hash = Set-NumberStyle $num "getStandingsProp($ci, $ri, 'Number')" $isPlayer '[variable.classColor]' "(49 + $Shift - 25) + 34 - 2"
 Insert-Children $row ([array]::IndexOf(@($row['Childrens']), $num) + 1) @($hash)
+
+# position change (race): green / red pill like the delta, white caret + number, placed right of
+# the rating badge instead of on the class colour. benofficial2 reserves its 25px column in front of the car
+# number via PositionChangeOffset (0 visible / -25 hidden): that column is now always gone (-25 fixed for
+# everything up to the rating), and PositionChangeOffset instead makes room for the pill after the rating, so the
+# timing columns, the row width and the column titles all follow it (the name column gives the space back).
+$pcGroup = Get-Child $row 'Position Change'
+$pcW = [double]$pcGroup['Width'] + $PcExtra
+$pcGroup['Width'] = $pcW
+$pcoNc = '[variable.PositionChangeOffset]'; $pcoJs = "`$prop('variable.PositionChangeOffset')"
+foreach ($n in 'Number', 'Country Flag', 'Driver Name', 'OutLap', 'Joker', 'Car Logo', 'Rating') {
+  foreach ($b in (Get-Child $row $n)['Bindings'].Values) {
+    $b['Formula']['Expression'] = $b['Formula']['Expression'].Replace($pcoNc, '(-25)').Replace($pcoJs, '(-25)')
+  }
+}
+# same spot the first timing column would take without the pill
+Set-Nc $pcGroup 'Left' ((Get-Expr (Get-Child $row 'Gap to Leader') 'Left').Replace($pcoNc, '(-25)'))
+$pcJs = "const change = isnull(getStandingsProp($ci, $ri, 'PositionChange'), 0);"
+$pill = Get-Child $pcGroup 'RectangleItem'
+$pill['Left'] = 0.0; $pill['Top'] = 2.0; $pill['Width'] = $pcW; $pill['Height'] = [double]($R - 4)
+# benofficial2's fill colours are the delta's (green #7352E052 / red #73FF6345): keep them, round like the delta
+$pill['BorderStyle'] = New-Radius 4 4 4 4
+$pcText = Get-Child $pcGroup 'Position Change'
+$pcText['Bindings'].Remove('Left') | Out-Null
+$pcText['Left'] = 11.0; $pcText['Width'] = $pcW - 13; $pcText['Top'] = 0.0; $pcText['Height'] = [double]$R
+$pcText['HorizontalAlignment'] = 1; $pcText['TextColor'] = $TextWhite
+Set-TimingMonospace $pcText
+$caret = Get-Child $pcGroup 'Caret'
+foreach ($b in 'Left', 'Top') { $caret['Bindings'].Remove($b) | Out-Null }
+$caret['Left'] = 5.0; $caret['Width'] = 7.0; $caret['Height'] = 7.0; $caret['Top'] = ($R - 7) / 2
+$pco = Get-Var $cs 'PositionChangeOffset'
+$e = $pco['ValueExpression']['Expression']
+if ($e -notmatch ',0,-25\)$') { throw "PositionChangeOffset patch failed: $e" }
+$pco['ValueExpression']['Expression'] = $e -replace ',0,-25\)$', ",$($pcW + $ColGap - 25),-25)"
 
 # class header: no own background, rounded class badge, dim column titles, thin class-colour underline
 $hdr['Top'] = [double]$ClassGap; $hdr['Height'] = [double]$ClassHdr
