@@ -29,7 +29,6 @@ $rel = 'benofficial2 - iRacing Relative'
 
 $Shift     = 21          # car number right edge moves from 60 to 81 (room for pos cell + timeline)
 $GapExtra  = 14          # extra width for the timing column so it doesn't touch the pit/lap column
-$ColGap    = 4           # a little air between the columns right of the car number
 $OrigW     = 500         # benofficial2 dashboard width
 # extra horizontal space per column (multiples of $ColGap, cumulative from left to right)
 $ColSteps  = [ordered]@{ 'Country Flag' = 1; 'DriverName' = 2; 'Black Flag' = 2; 'OutLap' = 2; 'Push To Pass' = 2; 'Car Logo' = 2;

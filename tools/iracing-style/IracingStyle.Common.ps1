@@ -314,6 +314,7 @@ function Set-PitPills($row) {
 # License/iRating badge like iRacing: larger, transparent fill, licence-coloured outline and text.
 # $extra widens it (callers move the columns to its right by the same amount).
 $RatingExtra = 12
+$ColGap      = 4    # extra air between the columns right of the car number (same in Relative and Standings)
 function Set-RatingStyle($rating, [int]$extra = $RatingExtra) {
   # fill = licence (outline) colour at ~16% (measured: B #33CC00 -> #1F381C over the panel)
   $rating['BackgroundColor'] = '#00000000'

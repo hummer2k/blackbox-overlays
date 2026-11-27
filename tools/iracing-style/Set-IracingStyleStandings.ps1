@@ -31,7 +31,13 @@ $OrigW    = 690          # benofficial2 dashboard width
 $OrigRowW = 641          # benofficial2 minimum row width
 $TimeColW = 72           # best/last columns: 65 -> 72 so Roboto Mono times fit inside the purple/green pills
 $TimeExtra = $TimeColW - 65
-$Widen    = $Shift + 2 * $TimeExtra + $RatingExtra   # total extra row width (incl. larger rating badge)
+# column gaps like the Relative: extra space per column in multiples of $ColGap, cumulative from left to right
+$ColSteps = [ordered]@{ 'Country Flag' = 1; 'Driver Name' = 2; 'OutLap' = 2; 'Joker' = 2; 'Car Logo' = 2; 'Rating' = 3;
+                        'Gap to Leader' = 4; 'Interval' = 5; 'Best Lap Time' = 6; 'Last Lap Time' = 7; 'Delta Lap Time' = 8;
+                        'Tire Compound' = 9; 'Pit Status' = 10; 'Pit Time' = 11 }
+$HdrSteps = [ordered]@{ 'Gap' = 4; 'Interval' = 5; 'Best' = 6; 'Last' = 7; 'Delta' = 8; 'Pit' = 10; 'Pit Time' = 11 }
+$ColExtra = 11 * $ColGap
+$Widen    = $Shift + 2 * $TimeExtra + $RatingExtra + $ColExtra   # total extra row width (incl. larger rating badge)
 $NewW     = $OrigW + $Widen
 $ClassGap = 4            # space above each class block
 $ClassHdr = 24           # class header height (badge, SOF, drivers, column titles)
@@ -80,9 +86,16 @@ $v['ValueExpression']['Expression'] = $v['ValueExpression']['Expression'].Replac
 if ($v['ValueExpression']['Expression'] -notmatch "\+ $Widen") { throw 'variableWidth patch failed' }
 $hw = Get-Var $cs 'headerWidth'
 $hw['ValueExpression']['Expression'] = $hw['ValueExpression']['Expression'].Replace("$OrigRowW +", "$($OrigRowW + $Widen) +")
-Update-RatingOffset (Get-Var $cs 'RatingOffset')
-# hidden best/last columns must free their new width
-foreach ($vn in 'BestOffset', 'LastOffset') { $o = Get-Var $cs $vn; $o['ValueExpression']['Expression'] = $o['ValueExpression']['Expression'].Replace('-67', "-$(67 + $TimeExtra)") }
+Update-RatingOffset (Get-Var $cs 'RatingOffset') ($RatingExtra + $ColGap)
+# hidden columns must free their new width and their column gap
+$hiddenW = [ordered]@{ 'CountryOffset' = 20; 'GapOffset' = 37; 'IntervalOffset' = 37; 'BestOffset' = 67; 'LastOffset' = 67; 'DeltaOffset' = 31; 'PitTimeOffset' = 45 }
+foreach ($vn in $hiddenW.Keys) {
+  $o = Get-Var $cs $vn; $old = $hiddenW[$vn]
+  $new = $old + $ColGap + $(if ($vn -in 'BestOffset', 'LastOffset') { $TimeExtra } else { 0 })
+  $e = $o['ValueExpression']['Expression']
+  if ($e -notmatch ",0,-$old\)$") { throw "$vn patch failed: $e" }
+  $o['ValueExpression']['Expression'] = $e -replace ",0,-$old\)$", ",0,-$new)"
+}
 # class badge width: benofficial2 scales a measured text size for Roboto (x0.54); Inter is ~15% wider
 $cn = Get-Var $cs 'ClassNameWidth'
 $cn['ValueExpression']['Expression'] = $cn['ValueExpression']['Expression'].Replace('textSize * 0.54 + 4', 'textSize * 0.62 + 10')
@@ -122,8 +135,13 @@ Set-RatingStyle (Get-Child $row 'Rating')
 foreach ($n in 'Gap to Leader', 'Interval', 'Best Lap Time', 'Last Lap Time', 'Delta Lap Time', 'Tire Compound', 'Pit Status', 'Pit Time') { Add-ToLeft (Get-Child $row $n) $RatingExtra }
 # wider best/last columns: everything right of them moves along
 $colShift = @{ 'Last Lap Time' = $TimeExtra; 'Delta Lap Time' = 2 * $TimeExtra; 'Tire Compound' = 2 * $TimeExtra; 'Pit Status' = 2 * $TimeExtra; 'Pit Time' = 2 * $TimeExtra }
+(Get-Child $row 'Delta Lap Time')['Width'] = [double](Get-Child $row 'Delta Lap Time')['Width']
 foreach ($n in $colShift.Keys) { Add-ToLeft (Get-Child $row $n) $colShift[$n] }
 foreach ($n in 'Best Lap Time', 'Last Lap Time') { (Get-Child $row $n)['Width'] = [double]$TimeColW }
+# column spacing as in the Relative (the name keeps its width; everything right of it moves along)
+foreach ($n in $ColSteps.Keys) { Add-ToLeft (Get-Child $row $n) ($ColSteps[$n] * $ColGap) }
+# benofficial2's logo sits 3px further left of the rating than in the Relative
+foreach ($n in 'OutLap', 'Joker', 'Car Logo') { Add-ToLeft (Get-Child $row $n) 3 }
 
 # best / last lap highlights (purple / green) as rounded pills instead of full-height blocks
 foreach ($n in 'Best Lap Time', 'Last Lap Time', 'Delta Lap Time') { Set-Pill (Get-Child $row $n) }
@@ -142,7 +160,7 @@ $timeline = New-ClassTimeline '[variable.classColor]' '[variable.classShape]'
 Insert-Children $row 2 (@($timeline | Where-Object { $_['Name'] -like 'Class Glow*' }) + @(New-PosCell $isPlayer) + @($timeline | Where-Object { $_['Name'] -notlike 'Class Glow*' }))
 
 $num = Get-Child $row 'Number'
-$hash = Set-NumberStyle $num "getStandingsProp($ci, $ri, 'Number')" $isPlayer '[variable.classColor]' "(49 + $Shift + `$prop('variable.PositionChangeOffset')) + 34 - 2"
+$hash = Set-NumberStyle $num "getStandingsProp($ci, $ri, 'Number')" $isPlayer '[variable.classColor]' "(49 + $Shift + `('variable.PositionChangeOffset')) + 34 - 2"
 Insert-Children $row ([array]::IndexOf(@($row['Childrens']), $num) + 1) @($hash)
 
 # class header: no own background, rounded class badge, dim column titles, thin class-colour underline
@@ -162,8 +180,10 @@ foreach ($c in @($hdr['Childrens'])) {
 # column titles follow the larger rating badge and the wider best/last columns
 foreach ($n in 'Gap', 'Interval', 'Best', 'Last', 'Delta', 'Pit', 'Pit Time') { Add-ToLeft (Get-Child $hdr $n) $RatingExtra }
 $hdrShift = @{ 'Last' = $TimeExtra; 'Delta' = 2 * $TimeExtra; 'Pit' = 2 * $TimeExtra; 'Pit Time' = 2 * $TimeExtra }
+(Get-Child $hdr 'Delta')['Width'] = [double](Get-Child $hdr 'Delta')['Width']
 foreach ($n in $hdrShift.Keys) { Add-ToLeft (Get-Child $hdr $n) $hdrShift[$n] }
 foreach ($n in 'Best', 'Last') { (Get-Child $hdr $n)['Width'] = [double]$TimeColW }
+foreach ($n in $HdrSteps.Keys) { Add-ToLeft (Get-Child $hdr $n) ($HdrSteps[$n] * $ColGap) }
 # "STINT" is right-aligned with 5px padding in 36px - too narrow for Inter: grow it to the left
 $stint = Get-Child $hdr 'Pit'
 Add-ToLeft $stint -10; $stint['Width'] = [double]$stint['Width'] + 10
