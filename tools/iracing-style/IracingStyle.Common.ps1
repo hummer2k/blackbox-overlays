@@ -325,6 +325,8 @@ function Set-RatingStyle($rating, [int]$extra = $RatingExtra) {
   # iRacing: same ~10px digit height, but regular weight (not semibold)
   $rating['Top'] = 2.0; $rating['Height'] = [double]($R - 4); $rating['FontSize'] = 12.0
   $rating['Font'] = $Font; $rating['FontWeight'] = 'Normal'
+  # benofficial2's Relative badge has 1px bottom padding, the Standings badge none: centre the text in both
+  $rating.Remove('TextPadding') | Out-Null
   foreach ($k in 'RadiusTopLeft', 'RadiusTopRight', 'RadiusBottomLeft', 'RadiusBottomRight') { $rating['BorderStyle'][$k] = 5 }
   $rating['Width'] = [double]$rating['Width'] + $extra
   $f = $rating['Bindings']['Width']['Formula']
