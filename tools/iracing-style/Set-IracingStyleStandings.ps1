@@ -38,7 +38,8 @@ $ColSteps = [ordered]@{ 'Country Flag' = 1; 'Driver Name' = 2; 'OutLap' = 2; 'Jo
 $HdrSteps = [ordered]@{ 'Gap' = 4; 'Interval' = 5; 'Best' = 6; 'Last' = 7; 'Delta' = 8; 'Pit' = 10; 'Pit Time' = 11 }
 $ColExtra = 11 * $ColGap
 $PcExtra  = 6            # position change column 25 -> 31 so two digits fit in the pill
-$Widen    = $Shift + 2 * $TimeExtra + $RatingExtra + $ColExtra   # total extra row width (incl. larger rating badge)
+$DeltaExtra = 8          # delta pill 34 -> 42: some padding around '+0.1'
+$Widen    = $Shift + 2 * $TimeExtra + $DeltaExtra + $RatingExtra + $ColExtra   # total extra row width (incl. larger rating badge)
 $NewW     = $OrigW + $Widen
 $ClassGap = 4            # space above each class block
 $ClassHdr = 24           # class header height (badge, SOF, drivers, column titles)
@@ -92,7 +93,7 @@ Update-RatingOffset (Get-Var $cs 'RatingOffset') ($RatingExtra + $ColGap)
 $hiddenW = [ordered]@{ 'CountryOffset' = 20; 'GapOffset' = 37; 'IntervalOffset' = 37; 'BestOffset' = 67; 'LastOffset' = 67; 'DeltaOffset' = 31; 'PitTimeOffset' = 45 }
 foreach ($vn in $hiddenW.Keys) {
   $o = Get-Var $cs $vn; $old = $hiddenW[$vn]
-  $new = $old + $ColGap + $(if ($vn -in 'BestOffset', 'LastOffset') { $TimeExtra } else { 0 })
+  $new = $old + $ColGap + $(if ($vn -in 'BestOffset', 'LastOffset') { $TimeExtra } elseif ($vn -eq 'DeltaOffset') { $DeltaExtra } else { 0 })
   $e = $o['ValueExpression']['Expression']
   if ($e -notmatch ",0,-$old\)$") { throw "$vn patch failed: $e" }
   $o['ValueExpression']['Expression'] = $e -replace ",0,-$old\)$", ",0,-$new)"
@@ -135,8 +136,8 @@ Set-Js $pos 'TextColor' "return ($isPlayer) ? '$OnYellow' : '$TextWhite';"
 Set-RatingStyle (Get-Child $row 'Rating')
 foreach ($n in 'Gap to Leader', 'Interval', 'Best Lap Time', 'Last Lap Time', 'Delta Lap Time', 'Tire Compound', 'Pit Status', 'Pit Time') { Add-ToLeft (Get-Child $row $n) $RatingExtra }
 # wider best/last columns: everything right of them moves along
-$colShift = @{ 'Last Lap Time' = $TimeExtra; 'Delta Lap Time' = 2 * $TimeExtra; 'Tire Compound' = 2 * $TimeExtra; 'Pit Status' = 2 * $TimeExtra; 'Pit Time' = 2 * $TimeExtra }
-(Get-Child $row 'Delta Lap Time')['Width'] = [double](Get-Child $row 'Delta Lap Time')['Width']
+$colShift = @{ 'Last Lap Time' = $TimeExtra; 'Delta Lap Time' = 2 * $TimeExtra; 'Tire Compound' = 2 * $TimeExtra + $DeltaExtra; 'Pit Status' = 2 * $TimeExtra + $DeltaExtra; 'Pit Time' = 2 * $TimeExtra + $DeltaExtra }
+(Get-Child $row 'Delta Lap Time')['Width'] = [double](Get-Child $row 'Delta Lap Time')['Width'] + $DeltaExtra
 foreach ($n in $colShift.Keys) { Add-ToLeft (Get-Child $row $n) $colShift[$n] }
 foreach ($n in 'Best Lap Time', 'Last Lap Time') { (Get-Child $row $n)['Width'] = [double]$TimeColW }
 # column spacing as in the Relative (the name keeps its width; everything right of it moves along)
@@ -214,8 +215,8 @@ foreach ($c in @($hdr['Childrens'])) {
 (Get-Child $hdr 'Car Class')['Top'] = 2.0
 # column titles follow the larger rating badge and the wider best/last columns
 foreach ($n in 'Gap', 'Interval', 'Best', 'Last', 'Delta', 'Pit', 'Pit Time') { Add-ToLeft (Get-Child $hdr $n) $RatingExtra }
-$hdrShift = @{ 'Last' = $TimeExtra; 'Delta' = 2 * $TimeExtra; 'Pit' = 2 * $TimeExtra; 'Pit Time' = 2 * $TimeExtra }
-(Get-Child $hdr 'Delta')['Width'] = [double](Get-Child $hdr 'Delta')['Width']
+$hdrShift = @{ 'Last' = $TimeExtra; 'Delta' = 2 * $TimeExtra; 'Pit' = 2 * $TimeExtra + $DeltaExtra; 'Pit Time' = 2 * $TimeExtra + $DeltaExtra }
+(Get-Child $hdr 'Delta')['Width'] = [double](Get-Child $hdr 'Delta')['Width'] + $DeltaExtra
 foreach ($n in $hdrShift.Keys) { Add-ToLeft (Get-Child $hdr $n) $hdrShift[$n] }
 foreach ($n in 'Best', 'Last') { (Get-Child $hdr $n)['Width'] = [double]$TimeColW }
 foreach ($n in $HdrSteps.Keys) { Add-ToLeft (Get-Child $hdr $n) ($HdrSteps[$n] * $ColGap) }
