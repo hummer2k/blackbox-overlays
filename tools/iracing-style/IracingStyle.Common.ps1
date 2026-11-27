@@ -306,6 +306,14 @@ function New-PosCell([string]$isPlayerJs) {
 function Set-Pill($item) {
   $item['Top'] = 2.0; $item['Height'] = [double]($R - 4); $item['BorderStyle'] = New-Radius 4 4 4 4
 }
+# Text on a coloured pill stays off-white, also in the player's row (yellow on purple/green/red is hard to read).
+function Set-PillTextWhite($item) {
+  $bg = $item['Bindings']['BackgroundColor']['Formula']; $tc = $item['Bindings']['TextColor']['Formula']
+  if ($bg['Interpreter'] -ne 1 -or $tc['Interpreter'] -ne 1) { throw "$($item['Name']): pill colours are not JS bindings" }
+  $tc['Expression'] = "const pill = String((function(){`r`n$($bg['Expression'])`r`n})() || '');`r`n" +
+                      "if (pill && pill != 'Transparent' && !/^#00/i.test(pill)) return '$TextWhite';`r`n" +
+                      "return (function(){`r`n$($tc['Expression'])`r`n})();"
+}
 # PIT / TOW inside benofficial2's 'Pit Status' group
 function Set-PitPills($row) {
   $ps = Get-Child $row 'Pit Status'

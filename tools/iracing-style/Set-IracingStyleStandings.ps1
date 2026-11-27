@@ -146,7 +146,7 @@ foreach ($n in $ColSteps.Keys) { Add-ToLeft (Get-Child $row $n) ($ColSteps[$n] *
 foreach ($n in 'OutLap', 'Joker', 'Car Logo') { Add-ToLeft (Get-Child $row $n) 3 }
 
 # best / last lap highlights (purple / green) as rounded pills instead of full-height blocks
-foreach ($n in 'Best Lap Time', 'Last Lap Time', 'Delta Lap Time') { Set-Pill (Get-Child $row $n) }
+foreach ($n in 'Best Lap Time', 'Last Lap Time', 'Delta Lap Time') { Set-Pill (Get-Child $row $n); Set-PillTextWhite (Get-Child $row $n) }
 Set-PitPills $row
 Set-IracingTyreIcons $row
 # keep long names clear of the OUT badge (31px); the joker icon is already accounted for by benofficial2
