@@ -3,7 +3,9 @@
 SimHub overlays for iRacing that look like iRacing's own (2025 UI) black boxes, with the extra data
 of a SimHub plugin.
 
-![Blackbox Standings, Relative and Spotter](docs/screenshot.png)
+![Blackbox Multi-Class Standings](docs/standings.png)
+
+![Blackbox Relative](docs/relative.png)
 
 ## Another overlay? As if there weren't enough already...
 
