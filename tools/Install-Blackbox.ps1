@@ -51,6 +51,7 @@ if ($MigrateFromBenofficial2 -and ($SkipPlugin -or -not (Test-Path $PluginDll)))
 # ---- overlays ----
 $dashDir = Join-Path $SimHubDir 'DashTemplates'
 $fontDir = Join-Path $SimHubDir 'DashFonts'
+foreach ($d in $dashDir, $fontDir) { if (-not (Test-Path $d)) { New-Item -ItemType Directory $d -Force | Out-Null } }
 foreach ($name in $BlackboxOverlays.Values) {
   $src = Join-Path $repo "Overlays\$name"
   if (-not (Test-Path $src)) { throw "Missing $src - run tools\Build-Overlays.ps1 first" }

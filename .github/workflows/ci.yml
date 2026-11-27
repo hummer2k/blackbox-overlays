@@ -83,6 +83,10 @@ jobs:
           $version = if ($env:GITHUB_REF_NAME -like 'v*') { $env:GITHUB_REF_NAME.Substring(1) } else { "dev-$($env:GITHUB_SHA.Substring(0, 7))" }
           .\tools\ci\New-ReleasePackage.ps1 -Version $version -OutDir dist
 
+      - name: Install from the release zip
+        shell: powershell
+        run: .\tools\ci\Test-ReleaseInstall.ps1 -Zip (Get-Item dist\*.zip).FullName
+
       - uses: actions/upload-artifact@v4
         with:
           name: blackbox-overlays
